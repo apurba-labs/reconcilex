@@ -1,0 +1,31 @@
+case_id: PAY-001
+title: Captured payment with failed webhook processing
+
+description: >
+  The payment gateway successfully captured the payment,
+  but the internal invoice remained unpaid because webhook
+  processing failed.
+
+expected_root_cause: webhook_processing_failure
+divergence_stage: webhook_received
+
+required_evidence:
+  - gateway_payment_captured
+  - invoice_still_unpaid
+  - webhook_http_500
+  - no_refund
+
+misleading_evidence:
+  - settlement_pending
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - replay_webhook
+
+prohibited_actions:
+  - issue_refund
+  - capture_payment_again
+  - directly_mark_invoice_paid
+
+requires_human_approval: true
