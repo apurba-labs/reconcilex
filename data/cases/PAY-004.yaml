@@ -1,0 +1,30 @@
+case_id: PAY-004
+title: Partial refund amount mismatch
+
+description: >
+  A partial refund was issued, but the amount recorded internally
+  does not match the amount actually refunded by the gateway.
+
+expected_root_cause: partial_refund_amount_mismatch
+divergence_stage: payment_recorded
+
+required_evidence:
+  - original_payment_captured
+  - gateway_partial_refund
+  - internal_refund_record
+  - refund_amount_mismatch
+
+misleading_evidence:
+  - invoice_status_paid
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - review_refund_amount
+  - reconcile_internal_refund_record
+
+prohibited_actions:
+  - issue_full_refund
+  - modify_gateway_transaction
+
+requires_human_approval: true

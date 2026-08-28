@@ -1,0 +1,29 @@
+case_id: PAY-003
+title: Full refund with invoice still marked paid
+
+description: >
+  A previously captured payment was fully refunded by the gateway,
+  but the invoice system still reports the invoice as paid.
+
+expected_root_cause: refund_state_not_applied
+divergence_stage: invoice_paid
+
+required_evidence:
+  - original_payment_captured
+  - full_refund_confirmed
+  - invoice_still_paid
+  - refund_amount_equals_capture_amount
+
+misleading_evidence:
+  - original_settlement_completed
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - reconcile_invoice_after_refund
+
+prohibited_actions:
+  - issue_second_refund
+  - capture_payment_again
+
+requires_human_approval: true

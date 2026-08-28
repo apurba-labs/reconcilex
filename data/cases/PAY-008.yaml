@@ -1,0 +1,33 @@
+case_id: PAY-008
+title: Currency mismatch during payment application
+
+description: >
+  The gateway captured the expected numeric amount and the webhook
+  was delivered successfully, but the invoice remained unpaid because
+  the payment currency did not match the invoice currency.
+
+expected_root_cause: currency_mismatch
+divergence_stage: payment_recorded
+
+required_evidence:
+  - gateway_payment_captured
+  - webhook_delivered_successfully
+  - payment_received_event
+  - invoice_currency_differs_from_payment_currency
+  - payment_application_rejected
+
+misleading_evidence:
+  - settlement_contains_payment
+  - matching_numeric_amount
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - manual_currency_review
+
+prohibited_actions:
+  - replay_webhook
+  - issue_refund
+  - directly_mark_invoice_paid
+
+requires_human_approval: true

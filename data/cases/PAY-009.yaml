@@ -1,0 +1,30 @@
+case_id: PAY-009
+title: Payment mapped to the wrong invoice
+
+description: >
+  A valid payment was captured but its external reference mapped it
+  to a different invoice, leaving the intended invoice unpaid.
+
+expected_root_cause: incorrect_payment_reference_mapping
+divergence_stage: payment_recorded
+
+required_evidence:
+  - gateway_payment_captured
+  - payment_reference
+  - payment_attached_to_wrong_invoice
+  - intended_invoice_unpaid
+
+misleading_evidence:
+  - another_invoice_marked_paid
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - review_payment_mapping
+  - prepare_payment_reassignment
+
+prohibited_actions:
+  - capture_payment_again
+  - issue_refund_without_review
+
+requires_human_approval: true

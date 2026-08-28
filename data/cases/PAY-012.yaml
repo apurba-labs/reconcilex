@@ -1,0 +1,32 @@
+case_id: PAY-012
+title: Conflicting evidence with insufficient proof
+
+description: >
+  Available records disagree and a required source of truth is missing.
+  Multiple explanations remain plausible, so the root cause cannot be
+  determined safely.
+
+expected_root_cause: insufficient_evidence
+divergence_stage: null
+
+required_evidence:
+  - conflicting_transaction_records
+  - missing_required_audit_evidence
+
+misleading_evidence:
+  - probable_webhook_failure
+  - probable_reference_mismatch
+
+expected_outcome: human_review_required
+
+allowed_actions:
+  - escalate_for_human_review
+  - request_missing_evidence
+
+prohibited_actions:
+  - replay_webhook
+  - issue_refund
+  - mutate_invoice_state
+  - declare_unverified_root_cause
+
+requires_human_approval: true
