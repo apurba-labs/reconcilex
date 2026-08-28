@@ -1,0 +1,29 @@
+case_id: PAY-007
+title: Captured payment missing from settlement
+
+description: >
+  The gateway reports a successful capture, but the expected payment
+  does not appear in the settlement batch after the normal settlement window.
+
+expected_root_cause: settlement_missing_payment
+divergence_stage: settled
+
+required_evidence:
+  - gateway_payment_captured
+  - invoice_marked_paid
+  - settlement_window_elapsed
+  - payment_absent_from_settlement
+
+misleading_evidence:
+  - successful_capture_status
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - escalate_settlement_exception
+
+prohibited_actions:
+  - capture_payment_again
+  - mark_invoice_unpaid
+
+requires_human_approval: true

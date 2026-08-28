@@ -1,0 +1,31 @@
+case_id: PAY-010
+title: Duplicate webhook processed twice
+
+description: >
+  The gateway emitted a retry of the same webhook and the internal
+  processor applied the same financial event twice instead of treating
+  the repeated event idempotently.
+
+expected_root_cause: duplicate_webhook_processing
+divergence_stage: payment_recorded
+
+required_evidence:
+  - same_webhook_event_id_received_twice
+  - duplicate_internal_processing
+  - single_gateway_capture
+  - duplicated_internal_effect
+
+misleading_evidence:
+  - webhook_retry_is_expected_behavior
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - review_duplicate_internal_effect
+  - repair_idempotency_state
+
+prohibited_actions:
+  - refund_valid_payment
+  - capture_payment_again
+
+requires_human_approval: true

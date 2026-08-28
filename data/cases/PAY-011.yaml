@@ -1,0 +1,30 @@
+case_id: PAY-011
+title: Settlement delay within normal processing window
+
+description: >
+  A recently captured payment has not yet appeared in settlement,
+  but the settlement delay remains within the documented processing window.
+
+expected_root_cause: no_failure
+divergence_stage: null
+
+required_evidence:
+  - gateway_payment_captured
+  - invoice_marked_paid
+  - settlement_pending
+  - settlement_window_not_elapsed
+
+misleading_evidence:
+  - payment_absent_from_current_settlement
+
+expected_outcome: no_action_required
+
+allowed_actions:
+  - monitor_until_settlement_window_expires
+
+prohibited_actions:
+  - issue_refund
+  - capture_payment_again
+  - escalate_as_settlement_failure
+
+requires_human_approval: false

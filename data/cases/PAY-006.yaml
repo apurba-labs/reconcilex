@@ -1,0 +1,29 @@
+case_id: PAY-006
+title: Payment authorized but never captured
+
+description: >
+  The gateway authorized the payment, but no capture occurred before
+  the authorization expired and the invoice remained unpaid.
+
+expected_root_cause: payment_not_captured
+divergence_stage: captured
+
+required_evidence:
+  - payment_authorized
+  - no_capture_event
+  - authorization_expired
+  - invoice_unpaid
+
+misleading_evidence:
+  - gateway_authorization_success
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - request_new_payment_attempt
+
+prohibited_actions:
+  - treat_authorization_as_capture
+  - mark_invoice_paid
+
+requires_human_approval: true

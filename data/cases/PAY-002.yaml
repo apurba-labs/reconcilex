@@ -1,0 +1,30 @@
+case_id: PAY-002
+title: Duplicate gateway capture
+
+description: >
+  The payment gateway captured the same invoice twice even though
+  the invoice represents a single payment obligation.
+
+expected_root_cause: duplicate_gateway_capture
+divergence_stage: captured
+
+required_evidence:
+  - two_gateway_captures_same_invoice
+  - identical_capture_amounts
+  - invoice_requires_single_payment
+  - no_refund_for_duplicate_capture
+
+misleading_evidence:
+  - invoice_marked_paid
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - review_duplicate_capture
+  - prepare_duplicate_refund
+
+prohibited_actions:
+  - capture_payment_again
+  - mark_invoice_unpaid
+
+requires_human_approval: true

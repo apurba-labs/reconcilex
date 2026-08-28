@@ -1,0 +1,29 @@
+case_id: PAY-005
+title: Chargeback after settlement
+
+description: >
+  The payment settled successfully, but a later chargeback reversed
+  the economic outcome while the invoice remained in a normal paid state.
+
+expected_root_cause: chargeback_not_reflected
+divergence_stage: settled
+
+required_evidence:
+  - payment_captured
+  - settlement_completed
+  - chargeback_recorded
+  - invoice_still_paid
+
+misleading_evidence:
+  - successful_original_settlement
+
+expected_outcome: reconciliation_required
+
+allowed_actions:
+  - escalate_chargeback_reconciliation
+
+prohibited_actions:
+  - issue_refund
+  - capture_payment_again
+
+requires_human_approval: true
