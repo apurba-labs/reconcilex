@@ -1,0 +1,152 @@
+[
+  {
+    "audit_id": "AUD-1001",
+    "case_id": "PAY-001",
+    "entity_type": "invoice",
+    "entity_id": "INV-1001",
+    "event_type": "payment_webhook_processing",
+    "result": "failed",
+    "reason": "upstream_invoice_service_http_500",
+    "occurred_at": "2026-08-20T10:03:06Z"
+  },
+  {
+    "audit_id": "AUD-2001",
+    "case_id": "PAY-002",
+    "entity_type": "invoice",
+    "entity_id": "INV-1002",
+    "event_type": "payment_application",
+    "result": "processed",
+    "reason": "invoice_marked_paid_after_first_capture",
+    "occurred_at": "2026-08-20T11:03:03Z"
+  },
+  {
+    "audit_id": "AUD-3001",
+    "case_id": "PAY-003",
+    "entity_type": "invoice",
+    "entity_id": "INV-1003",
+    "event_type": "refund_state_sync",
+    "result": "failed",
+    "reason": "invoice_status_update_not_applied",
+    "occurred_at": "2026-08-22T14:00:05Z"
+  },
+  {
+    "audit_id": "AUD-4001",
+    "case_id": "PAY-004",
+    "entity_type": "payment",
+    "entity_id": "PI-1004",
+    "event_type": "internal_refund_recorded",
+    "result": "processed",
+    "reason": "internal_refund_amount_200.00",
+    "occurred_at": "2026-08-20T15:00:02Z"
+  },
+  {
+    "audit_id": "AUD-4002",
+    "case_id": "PAY-004",
+    "entity_type": "invoice",
+    "entity_id": "INV-1004",
+    "event_type": "invoice_state_check",
+    "result": "processed",
+    "reason": "invoice_remains_paid",
+    "occurred_at": "2026-08-20T15:00:04Z"
+  },
+  {
+    "audit_id": "AUD-5001",
+    "case_id": "PAY-005",
+    "entity_type": "invoice",
+    "entity_id": "INV-1005",
+    "event_type": "chargeback_state_sync",
+    "result": "failed",
+    "reason": "invoice_status_not_adjusted_after_chargeback",
+    "occurred_at": "2026-08-25T13:00:05Z"
+  },
+  {
+    "audit_id": "AUD-6001",
+    "case_id": "PAY-006",
+    "entity_type": "payment",
+    "entity_id": "PI-1006",
+    "event_type": "authorization_expired",
+    "result": "failed",
+    "reason": "authorization_expired_before_capture",
+    "occurred_at": "2026-08-24T10:05:00Z"
+  },
+  {
+    "audit_id": "AUD-7001",
+    "case_id": "PAY-007",
+    "entity_type": "payment",
+    "entity_id": "PI-1007",
+    "event_type": "settlement_status_check",
+    "result": "pending",
+    "reason": "payment_absent_from_settlement_after_expected_window",
+    "occurred_at": "2026-08-25T11:00:00Z"
+  },
+  {
+    "audit_id": "AUD-8001",
+    "case_id": "PAY-008",
+    "entity_type": "payment",
+    "entity_id": "PI-1008",
+    "event_type": "payment_received",
+    "result": "processed",
+    "reason": "gateway_capture_received_successfully",
+    "occurred_at": "2026-08-23T14:03:05Z"
+  },
+  {
+    "audit_id": "AUD-8002",
+    "case_id": "PAY-008",
+    "entity_type": "invoice",
+    "entity_id": "INV-1008",
+    "event_type": "payment_application",
+    "result": "failed",
+    "reason": "currency_mismatch_invoice_EUR_payment_USD",
+    "occurred_at": "2026-08-23T14:03:06Z"
+  },
+  {
+    "audit_id": "AUD-9001",
+    "case_id": "PAY-009",
+    "entity_type": "payment",
+    "entity_id": "PI-1009",
+    "event_type": "payment_reference_resolved",
+    "result": "processed",
+    "reason": "gateway_reference_resolved_to_INV-1909",
+    "occurred_at": "2026-08-21T09:05:04Z"
+  },
+  {
+    "audit_id": "AUD-9002",
+    "case_id": "PAY-009",
+    "entity_type": "invoice",
+    "entity_id": "INV-1909",
+    "event_type": "payment_application",
+    "result": "processed",
+    "reason": "payment_applied_to_referenced_invoice",
+    "occurred_at": "2026-08-21T09:05:05Z"
+  },
+  {
+    "audit_id": "AUD-10001",
+    "case_id": "PAY-010",
+    "entity_type": "invoice",
+    "entity_id": "INV-1010",
+    "event_type": "payment_application",
+    "result": "processed",
+    "reason": "payment_effect_applied",
+    "occurred_at": "2026-08-22T10:04:04Z"
+  },
+  {
+    "audit_id": "AUD-10002",
+    "case_id": "PAY-010",
+    "entity_type": "invoice",
+    "entity_id": "INV-1010",
+    "event_type": "payment_application",
+    "result": "processed",
+    "reason": "duplicate_payment_effect_applied",
+    "occurred_at": "2026-08-22T10:04:09Z"
+  },
+  {
+    "audit_id": "AUD-11001",
+    "case_id": "PAY-011",
+    "entity_type": "payment",
+    "entity_id": "PI-1011",
+    "event_type": "settlement_status_check",
+    "result": "pending",
+    "reason": "settlement_still_within_expected_window",
+    "occurred_at": "2026-08-25T11:00:00Z"
+  }
+]

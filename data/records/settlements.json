@@ -1,0 +1,90 @@
+[
+  {
+    "settlement_id": "SET-1001",
+    "case_id": "PAY-001",
+    "payment_id": "PI-1001",
+    "gross_amount": "500.00",
+    "net_amount": "485.00",
+    "currency": "USD",
+    "status": "pending",
+    "expected_by": "2026-08-22T23:59:59Z",
+    "settled_at": null
+  },
+  {
+    "settlement_id": "SET-2001",
+    "case_id": "PAY-002",
+    "payment_id": "PI-1002",
+    "gross_amount": "600.00",
+    "net_amount": "582.00",
+    "currency": "USD",
+    "status": "settled",
+    "expected_by": "2026-08-22T23:59:59Z",
+    "settled_at": "2026-08-21T09:00:00Z"
+  },
+  {
+    "settlement_id": "SET-3001",
+    "case_id": "PAY-003",
+    "payment_id": "PI-1003",
+    "gross_amount": "450.00",
+    "net_amount": "436.50",
+    "currency": "USD",
+    "status": "settled",
+    "expected_by": "2026-08-20T23:59:59Z",
+    "settled_at": "2026-08-19T08:00:00Z"
+  },
+  {
+    "settlement_id": "SET-5001",
+    "case_id": "PAY-005",
+    "payment_id": "PI-1005",
+    "gross_amount": "1000.00",
+    "net_amount": "970.00",
+    "currency": "USD",
+    "status": "settled",
+    "expected_by": "2026-08-12T23:59:59Z",
+    "settled_at": "2026-08-11T09:00:00Z"
+  },
+  {
+    "settlement_id": "SET-7001",
+    "case_id": "PAY-007",
+    "payment_id": "PI-1007",
+    "gross_amount": "620.00",
+    "net_amount": "601.40",
+    "currency": "USD",
+    "status": "pending",
+    "expected_by": "2026-08-22T23:59:59Z",
+    "settled_at": null
+  },
+  {
+    "settlement_id": "SET-8001",
+    "case_id": "PAY-008",
+    "payment_id": "PI-1008",
+    "gross_amount": "1200.00",
+    "net_amount": "1164.00",
+    "currency": "USD",
+    "status": "settled",
+    "expected_by": "2026-08-25T23:59:59Z",
+    "settled_at": "2026-08-24T09:00:00Z"
+  },
+  {
+    "settlement_id": "SET-11001",
+    "case_id": "PAY-011",
+    "payment_id": "PI-1011",
+    "gross_amount": "410.00",
+    "net_amount": "397.70",
+    "currency": "USD",
+    "status": "pending",
+    "expected_by": "2026-08-27T23:59:59Z",
+    "settled_at": null
+  },
+  {
+    "settlement_id": "SET-12001",
+    "case_id": "PAY-012",
+    "payment_id": "PI-1012",
+    "gross_amount": "690.00",
+    "net_amount": "669.30",
+    "currency": "USD",
+    "status": "pending",
+    "expected_by": "2026-08-26T23:59:59Z",
+    "settled_at": null
+  }
+]

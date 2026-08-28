@@ -1,0 +1,86 @@
+[
+  {
+    "case_id": "PAY-001",
+    "reported_issue": "Customer reports a successful payment, but invoice INV-1001 remains unpaid.",
+    "primary_invoice_id": "INV-1001",
+    "known_payment_id": "PI-1001",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-002",
+    "reported_issue": "Customer reports being charged twice for a single invoice.",
+    "primary_invoice_id": "INV-1002",
+    "known_payment_id": "PI-1002",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-003",
+    "reported_issue": "Customer received a full refund, but the invoice still appears paid.",
+    "primary_invoice_id": "INV-1003",
+    "known_payment_id": "PI-1003",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-004",
+    "reported_issue": "Finance reports that the refund amount shown internally disagrees with the gateway.",
+    "primary_invoice_id": "INV-1004",
+    "known_payment_id": "PI-1004",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-005",
+    "reported_issue": "A settled payment later received a chargeback but the invoice still appears normally paid.",
+    "primary_invoice_id": "INV-1005",
+    "known_payment_id": "PI-1005",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-006",
+    "reported_issue": "Customer believes payment succeeded, but the invoice remains unpaid.",
+    "primary_invoice_id": "INV-1006",
+    "known_payment_id": "PI-1006",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-007",
+    "reported_issue": "A captured payment has not appeared in settlement.",
+    "primary_invoice_id": "INV-1007",
+    "known_payment_id": "PI-1007",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-008",
+    "reported_issue": "Gateway shows a successful payment while the invoice remains unpaid.",
+    "primary_invoice_id": "INV-1008",
+    "known_payment_id": "PI-1008",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-009",
+    "reported_issue": "A customer payment exists, but the expected invoice remains unpaid.",
+    "primary_invoice_id": "INV-1009",
+    "known_payment_id": "PI-1009",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-010",
+    "reported_issue": "Finance detected an unexpected duplicate internal payment effect.",
+    "primary_invoice_id": "INV-1010",
+    "known_payment_id": "PI-1010",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-011",
+    "reported_issue": "A recent captured payment is not yet visible in settlement.",
+    "primary_invoice_id": "INV-1011",
+    "known_payment_id": "PI-1011",
+    "observed_at": "2026-08-25T12:00:00Z"
+  },
+  {
+    "case_id": "PAY-012",
+    "reported_issue": "Systems disagree about whether the payment was processed successfully.",
+    "primary_invoice_id": "INV-1012",
+    "known_payment_id": "PI-1012",
+    "observed_at": "2026-08-25T12:00:00Z"
+  }
+]

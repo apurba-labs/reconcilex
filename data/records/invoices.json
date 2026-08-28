@@ -1,0 +1,132 @@
+[
+  {
+    "invoice_id": "INV-1001",
+    "case_id": "PAY-001",
+    "customer_id": "CUS-001",
+    "amount": "500.00",
+    "currency": "USD",
+    "status": "unpaid",
+    "created_at": "2026-08-20T10:00:00Z",
+    "updated_at": "2026-08-20T10:05:00Z"
+  },
+  {
+    "invoice_id": "INV-1002",
+    "case_id": "PAY-002",
+    "customer_id": "CUS-002",
+    "amount": "300.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-20T11:00:00Z",
+    "updated_at": "2026-08-20T11:07:00Z"
+  },
+  {
+    "invoice_id": "INV-1003",
+    "case_id": "PAY-003",
+    "customer_id": "CUS-003",
+    "amount": "450.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-18T09:00:00Z",
+    "updated_at": "2026-08-18T09:10:00Z"
+  },
+  {
+    "invoice_id": "INV-1004",
+    "case_id": "PAY-004",
+    "customer_id": "CUS-004",
+    "amount": "800.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-17T12:00:00Z",
+    "updated_at": "2026-08-17T12:08:00Z"
+  },
+  {
+    "invoice_id": "INV-1005",
+    "case_id": "PAY-005",
+    "customer_id": "CUS-005",
+    "amount": "1000.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-10T08:00:00Z",
+    "updated_at": "2026-08-10T08:10:00Z"
+  },
+  {
+    "invoice_id": "INV-1006",
+    "case_id": "PAY-006",
+    "customer_id": "CUS-006",
+    "amount": "275.00",
+    "currency": "USD",
+    "status": "unpaid",
+    "created_at": "2026-08-21T10:00:00Z",
+    "updated_at": "2026-08-24T10:00:00Z"
+  },
+  {
+    "invoice_id": "INV-1007",
+    "case_id": "PAY-007",
+    "customer_id": "CUS-007",
+    "amount": "620.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-19T09:00:00Z",
+    "updated_at": "2026-08-19T09:10:00Z"
+  },
+  {
+    "invoice_id": "INV-1008",
+    "case_id": "PAY-008",
+    "customer_id": "CUS-008",
+    "amount": "1200.00",
+    "currency": "EUR",
+    "status": "unpaid",
+    "created_at": "2026-08-23T14:00:00Z",
+    "updated_at": "2026-08-23T14:06:00Z"
+  },
+  {
+    "invoice_id": "INV-1009",
+    "case_id": "PAY-009",
+    "customer_id": "CUS-009",
+    "amount": "350.00",
+    "currency": "USD",
+    "status": "unpaid",
+    "created_at": "2026-08-21T09:00:00Z",
+    "updated_at": "2026-08-21T09:10:00Z"
+  },
+  {
+    "invoice_id": "INV-1909",
+    "case_id": "PAY-009",
+    "customer_id": "CUS-099",
+    "amount": "350.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-21T08:30:00Z",
+    "updated_at": "2026-08-21T09:06:00Z"
+  },
+  {
+    "invoice_id": "INV-1010",
+    "case_id": "PAY-010",
+    "customer_id": "CUS-010",
+    "amount": "525.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-22T10:00:00Z",
+    "updated_at": "2026-08-22T10:07:00Z"
+  },
+  {
+    "invoice_id": "INV-1011",
+    "case_id": "PAY-011",
+    "customer_id": "CUS-011",
+    "amount": "410.00",
+    "currency": "USD",
+    "status": "paid",
+    "created_at": "2026-08-24T08:00:00Z",
+    "updated_at": "2026-08-24T08:08:00Z"
+  },
+  {
+    "invoice_id": "INV-1012",
+    "case_id": "PAY-012",
+    "customer_id": "CUS-012",
+    "amount": "690.00",
+    "currency": "USD",
+    "status": "unpaid",
+    "created_at": "2026-08-23T15:00:00Z",
+    "updated_at": "2026-08-23T15:10:00Z"
+  }
+]
