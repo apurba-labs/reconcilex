@@ -1,0 +1,22 @@
+[
+  {
+    "refund_id": "REF-3001",
+    "case_id": "PAY-003",
+    "payment_id": "PI-1003",
+    "invoice_id": "INV-1003",
+    "amount": "450.00",
+    "currency": "USD",
+    "status": "succeeded",
+    "created_at": "2026-08-22T14:00:00Z"
+  },
+  {
+    "refund_id": "REF-4001",
+    "case_id": "PAY-004",
+    "payment_id": "PI-1004",
+    "invoice_id": "INV-1004",
+    "amount": "250.00",
+    "currency": "USD",
+    "status": "succeeded",
+    "created_at": "2026-08-20T15:00:00Z"
+  }
+]
