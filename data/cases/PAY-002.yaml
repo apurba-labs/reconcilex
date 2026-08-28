@@ -2,9 +2,8 @@ case_id: PAY-002
 title: Duplicate gateway capture
 
 description: >
-  The same invoice was captured twice at the payment gateway,
-  creating a duplicate charge while the invoice represents only
-  one legitimate payment obligation.
+  The payment gateway captured the same invoice twice even though
+  the invoice represents a single payment obligation.
 
 expected_root_cause: duplicate_gateway_capture
 divergence_stage: captured

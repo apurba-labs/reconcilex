@@ -2,8 +2,8 @@ case_id: PAY-003
 title: Full refund with invoice still marked paid
 
 description: >
-  A previously captured payment was fully refunded by the gateway,
-  but the invoice system still reports the invoice as paid.
+  A captured payment was fully refunded by the gateway, but the
+  invoice system still shows the invoice as paid.
 
 expected_root_cause: refund_state_not_applied
 divergence_stage: invoice_paid
