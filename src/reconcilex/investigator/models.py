@@ -1,3 +1,4 @@
+from typing import Literal
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -7,11 +8,27 @@ class HypothesisStatus(str, Enum):
     REJECTED = "rejected"
     INCONCLUSIVE = "inconclusive"
 
+class EvidenceSource(str, Enum):
+    INVOICE = "invoice"
+    GATEWAY_EVENT = "gateway_event"
+    WEBHOOK_EVENT = "webhook_event"
+    SETTLEMENT = "settlement"
+    REFUND = "refund"
+    AUDIT_EVENT = "audit_event"
+
+class EvidenceAssertion(BaseModel):
+    field: str
+    operator: Literal["eq", "neq"]
+    value: str
+
 
 class EvidenceRef(BaseModel):
-    source: str
+    source: EvidenceSource
     record_id: str
     claim: str
+    assertions: list[EvidenceAssertion] = Field(
+        default_factory=list
+    )
 
 
 class Hypothesis(BaseModel):

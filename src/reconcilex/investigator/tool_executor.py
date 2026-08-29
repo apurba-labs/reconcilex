@@ -67,8 +67,13 @@ class ToolExecutor:
                 f"Tool '{tool_call.tool_name}' is not registered."
             )
 
+        arguments = tool_call.arguments.model_dump(
+            exclude_none=True,
+        )
+
         try:
-            return tool(**tool_call.arguments)
+            return tool(**arguments)
+
         except TypeError as exc:
             raise ToolExecutionError(
                 f"Invalid arguments for tool "

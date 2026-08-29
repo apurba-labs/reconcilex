@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 from enum import Enum
 from typing import Protocol
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from reconcilex.domain.case_input import CaseInput
 from reconcilex.investigator.models import EvidenceRef
@@ -17,9 +19,22 @@ class PlannerActionType(str, Enum):
     FINISH = "finish"
 
 
+class PlannedToolArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: str | None = None
+    invoice_id: str | None = None
+    payment_id: str | None = None
+    entity_id: str | None = None
+
+
 class PlannedToolCall(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     tool_name: str
-    arguments: dict[str, str] = Field(default_factory=dict)
+    arguments: PlannedToolArguments = Field(
+        default_factory=PlannedToolArguments
+    )
 
 
 class PlannerDecision(BaseModel):
@@ -37,13 +52,14 @@ class PlannerAction(BaseModel):
     tool_call: PlannedToolCall | None = None
     decision: PlannerDecision | None = None
 
-    evidence: list[EvidenceRef] = Field(default_factory=list)
+    evidence: list[EvidenceRef] = Field(
+        default_factory=list
+    )
 
     finding: str | None = None
     root_cause: str | None = None
     first_divergence: str | None = None
     recommended_action: str | None = None
-
     confidence: float | None = None
     requires_human_approval: bool | None = None
 
@@ -57,16 +73,4 @@ class InvestigationPlanner(Protocol):
         case_input: CaseInput,
         trajectory: InvestigationTrajectory,
     ) -> PlannerAction:
-        """
-        Decide the next investigation step.
-
-        The planner may:
-        - propose or revise a hypothesis,
-        - request an approved tool call,
-        - reject/support a hypothesis,
-        - finish with a conclusion,
-        - abstain when evidence is insufficient.
-
-        It must not directly access evaluator ground truth.
-        """
         ...

@@ -1,5 +1,7 @@
 import pytest
 
+from pydantic import ValidationError
+
 from reconcilex.domain.record_loader import PaymentRecordStore
 from reconcilex.investigator.planner import PlannedToolCall
 from reconcilex.investigator.tool_executor import (
@@ -108,14 +110,12 @@ def test_executor_rejects_invalid_arguments():
     executor = build_executor()
 
     with pytest.raises(
-        ToolExecutionError,
-        match="Invalid arguments",
+        ValidationError,
+        match="Extra inputs are not permitted",
     ):
-        executor.execute(
-            PlannedToolCall(
-                tool_name="get_invoice",
-                arguments={
-                    "wrong_argument": "INV-1008",
-                },
-            )
+        PlannedToolCall(
+            tool_name="get_invoice",
+            arguments={
+                "wrong_argument": "INV-1008",
+            },
         )

@@ -1,9 +1,16 @@
 from __future__ import annotations
+
+from enum import Enum
 from typing import Any
+
 from pydantic import BaseModel
 
 from reconcilex.domain.record_loader import PaymentRecordStore
-from reconcilex.investigator.models import EvidenceRef
+from reconcilex.investigator.models import (
+    EvidenceAssertion,
+    EvidenceRef,
+)
+
 
 class EvidenceVerification(BaseModel):
     source: str
@@ -11,11 +18,15 @@ class EvidenceVerification(BaseModel):
     verified: bool
     reason: str
 
+
 class EvidenceVerifier:
     def __init__(self, store: PaymentRecordStore):
         self.store = store
 
-    def verify(self, evidence: EvidenceRef) -> EvidenceVerification:
+    def verify(
+        self,
+        evidence: EvidenceRef,
+    ) -> EvidenceVerification:
         record = self._find_record(
             source=evidence.source,
             record_id=evidence.record_id,
@@ -29,11 +40,17 @@ class EvidenceVerifier:
                 reason="Referenced evidence record was not found.",
             )
 
-        supported, reason = self._claim_supported(
-            source=evidence.source,
-            claim=evidence.claim,
-            record=record,
-        )
+        if evidence.assertions:
+            supported, reason = self._assertions_supported(
+                record=record,
+                assertions=evidence.assertions,
+            )
+        else:
+            supported, reason = self._claim_supported(
+                source=evidence.source,
+                claim=evidence.claim,
+                record=record,
+            )
 
         return EvidenceVerification(
             source=evidence.source,
@@ -86,6 +103,88 @@ class EvidenceVerifier:
                 return record
 
         return None
+
+    def _assertions_supported(
+        self,
+        *,
+        record: Any,
+        assertions: list[EvidenceAssertion],
+    ) -> tuple[bool, str]:
+        for assertion in assertions:
+            supported, reason = self._verify_assertion(
+                record=record,
+                assertion=assertion,
+            )
+
+            if not supported:
+                return False, reason
+
+        return (
+            True,
+            f"Verified {len(assertions)} structured assertion(s).",
+        )
+
+    @staticmethod
+    def _verify_assertion(
+        *,
+        record: Any,
+        assertion: EvidenceAssertion,
+    ) -> tuple[bool, str]:
+        if not hasattr(record, assertion.field):
+            return (
+                False,
+                f"Record does not contain field '{assertion.field}'.",
+            )
+
+        actual_value = EvidenceVerifier._normalize_value(
+            getattr(record, assertion.field)
+        )
+
+        expected_value = EvidenceVerifier._normalize_value(
+            assertion.value
+        )
+
+        if assertion.operator == "eq":
+            verified = actual_value == expected_value
+
+        elif assertion.operator == "neq":
+            verified = actual_value != expected_value
+
+        else:
+            return (
+                False,
+                f"Unsupported assertion operator '{assertion.operator}'.",
+            )
+
+        if not verified:
+            return (
+                False,
+                (
+                    f"Assertion failed: {assertion.field} "
+                    f"{assertion.operator} {expected_value!r}; "
+                    f"actual value was {actual_value!r}."
+                ),
+            )
+
+        return (
+            True,
+            (
+                f"Verified {assertion.field} "
+                f"{assertion.operator} {expected_value!r}."
+            ),
+        )
+
+    @staticmethod
+    def _normalize_value(
+        value: Any,
+    ) -> str:
+        if isinstance(value, Enum):
+            value = value.value
+
+        if value is None:
+            return ""
+
+        return str(value)
 
     def _claim_supported(
         self,

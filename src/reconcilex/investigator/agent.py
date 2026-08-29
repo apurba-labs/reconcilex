@@ -9,7 +9,10 @@ from reconcilex.investigator.planner import (
     PlannerAction,
     PlannerActionType,
 )
-from reconcilex.investigator.tool_executor import ToolExecutor
+from reconcilex.investigator.tool_executor import (
+    ToolExecutionError,
+    ToolExecutor,
+)
 from reconcilex.investigator.trajectory import (
     DecisionType,
     InvestigationStep,
@@ -17,8 +20,9 @@ from reconcilex.investigator.trajectory import (
     StepType,
     ToolCall,
 )
-from reconcilex.investigator.verifier import EvidenceVerifier
 
+from reconcilex.investigator.verifier import EvidenceVerifier
+from reconcilex.investigator.conclusion_safety import ConclusionSafetyGate
 
 class AgentInvestigationError(Exception):
     pass
@@ -31,11 +35,15 @@ class AgentInvestigator:
         planner: InvestigationPlanner,
         executor: ToolExecutor,
         verifier: EvidenceVerifier,
+        conclusion_gate: ConclusionSafetyGate | None = None,
         max_steps: int = 12,
     ):
         self.planner = planner
         self.executor = executor
         self.verifier = verifier
+        self.conclusion_gate = (
+            conclusion_gate or ConclusionSafetyGate()
+        )
         self.max_steps = max_steps
 
     def investigate(
@@ -102,7 +110,9 @@ class AgentInvestigator:
         action: PlannerAction,
     ) -> None:
         if action.tool_call is None:
-            raise AgentInvestigationError("CALL_TOOL action did not include a tool call.")
+            raise AgentInvestigationError(
+                "CALL_TOOL action did not include a tool call."
+            )
 
         if action.hypothesis:
             trajectory.add_step(
@@ -117,11 +127,39 @@ class AgentInvestigator:
             content=f"Call {action.tool_call.tool_name}.",
             tool_call=ToolCall(
                 tool_name=action.tool_call.tool_name,
-                arguments=action.tool_call.arguments,
+                arguments=action.tool_call.arguments.model_dump(
+                    exclude_none=True,
+                ),
             ),
         )
 
-        observation = self.executor.execute(action.tool_call)
+        try:
+            observation = self.executor.execute(
+                action.tool_call
+            )
+
+        except ToolExecutionError as exc:
+            trajectory.add_step(
+                step_type=StepType.OBSERVATION,
+                hypothesis_id=action.hypothesis_id,
+                content=(
+                    "Tool request rejected by execution boundary: "
+                    f"{exc}"
+                ),
+                observation_record_ids=[],
+            )
+
+            trajectory.add_step(
+                step_type=StepType.DECISION,
+                hypothesis_id=action.hypothesis_id,
+                content=(
+                    "The requested tool is unavailable. "
+                    "Re-plan using only an approved investigation tool."
+                ),
+                decision=DecisionType.REVISE,
+            )
+
+            return
 
         record_ids = self._extract_record_ids(observation)
 
@@ -135,7 +173,7 @@ class AgentInvestigator:
             ),
             observation_record_ids=record_ids,
         )
-
+        
     @staticmethod
     def _handle_decision(
         *,
@@ -202,6 +240,36 @@ class AgentInvestigator:
                     "The proposed conclusion relied on evidence "
                     "that could not be verified."
                 ),
+            )
+            
+        safety = self.conclusion_gate.verify(action, verified_evidence)
+        if not safety.safe:
+            trajectory.add_step(
+                step_type=StepType.FINAL,
+                content=(
+                    "Conclusion safety gate rejected the proposed "
+                    f"causal conclusion: {safety.reason}"
+                ),
+                decision=DecisionType.ABSTAIN,
+            )
+
+            return InvestigationResult(
+                case_id=case_input.case_id,
+                reported_issue=case_input.reported_issue,
+                hypotheses=[],
+                finding=None,
+                root_cause=None,
+                first_divergence=action.first_divergence,
+                evidence=verified_evidence,
+                contradictory_evidence=[],
+                confidence=0.0,
+                recommended_action=(
+                    "Escalate for human review and collect "
+                    "additional distinguishing evidence."
+                ),
+                requires_human_approval=True,
+                abstained=True,
+                abstention_reason=safety.reason,
             )
 
         if action.abstained:

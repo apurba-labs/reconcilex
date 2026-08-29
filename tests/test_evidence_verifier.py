@@ -1,5 +1,9 @@
 from reconcilex.domain.record_loader import PaymentRecordStore
-from reconcilex.investigator.models import EvidenceRef
+from reconcilex.investigator.models import (
+    EvidenceRef, 
+    EvidenceAssertion, 
+    EvidenceSource 
+)
 from reconcilex.investigator.verifier import EvidenceVerifier
 
 
@@ -119,6 +123,124 @@ def test_verifies_audit_reason():
             "Payment application failed because "
             "currency_mismatch_invoice_EUR_payment_USD."
         ),
+    )
+
+    result = verifier.verify(evidence)
+
+    assert result.verified is True
+    
+def test_structured_gateway_evidence_is_verified():
+    verifier = build_verifier()
+
+    evidence = EvidenceRef(
+        source="gateway_event",
+        record_id="GE-8001",
+        claim="Gateway payment was recorded in USD.",
+        assertions=[
+            EvidenceAssertion(
+                field="currency",
+                operator="eq",
+                value="USD",
+            )
+        ],
+    )
+
+    result = verifier.verify(evidence)
+
+    assert result.verified is True
+
+
+def test_structured_audit_evidence_is_verified():
+    verifier = build_verifier()
+
+    evidence = EvidenceRef(
+        source="audit_event",
+        record_id="AUD-8002",
+        claim="Payment application failed because of currency mismatch.",
+        assertions=[
+            EvidenceAssertion(
+                field="result",
+                operator="eq",
+                value="failed",
+            ),
+            EvidenceAssertion(
+                field="reason",
+                operator="eq",
+                value="currency_mismatch_invoice_EUR_payment_USD",
+            ),
+        ],
+    )
+
+    result = verifier.verify(evidence)
+
+    assert result.verified is True
+
+
+def test_structured_assertion_rejects_false_value():
+    verifier = build_verifier()
+
+    evidence = EvidenceRef(
+        source="gateway_event",
+        record_id="GE-8001",
+        claim="Gateway payment was recorded in EUR.",
+        assertions=[
+            EvidenceAssertion(
+                field="currency",
+                operator="eq",
+                value="EUR",
+            )
+        ],
+    )
+
+    result = verifier.verify(evidence)
+
+    assert result.verified is False
+    assert "actual value was 'USD'" in result.reason
+    
+    
+def test_verifies_structured_gateway_assertion():
+    verifier = build_verifier()
+    evidence = EvidenceRef(
+        source=EvidenceSource.GATEWAY_EVENT,
+        record_id="GE-8001",
+        claim="Gateway payment was captured in USD.",
+        assertions=[
+            EvidenceAssertion(
+                field="currency",
+                operator="eq",
+                value="USD",
+            ),
+            EvidenceAssertion(
+                field="event_type",
+                operator="eq",
+                value="payment_captured",
+            ),
+        ],
+    )
+
+    result = verifier.verify(evidence)
+
+    assert result.verified is True
+    
+    
+def test_verifies_structured_audit_assertion():
+    verifier = build_verifier()
+    evidence = EvidenceRef(
+        source=EvidenceSource.AUDIT_EVENT,
+        record_id="AUD-8002",
+        claim="Payment application failed because of currency mismatch.",
+        assertions=[
+            EvidenceAssertion(
+                field="result",
+                operator="eq",
+                value="failed",
+            ),
+            EvidenceAssertion(
+                field="reason",
+                operator="eq",
+                value="currency_mismatch_invoice_EUR_payment_USD",
+            ),
+        ],
     )
 
     result = verifier.verify(evidence)
