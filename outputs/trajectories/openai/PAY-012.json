@@ -1,0 +1,468 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-012",
+  "result": {
+    "case_id": "PAY-012",
+    "reported_issue": "Systems disagree about whether the payment was processed successfully.",
+    "hypotheses": [],
+    "finding": "PI-1012 was captured for USD 690.00 while INV-1012 remained unpaid. The capture referenced INV-9912, and its webhook subsequently failed with HTTP 500. Settlement remained pending, with no refund recorded.",
+    "root_cause": "Undetermined. The evidence does not establish whether the incorrect invoice reference originated during payment mapping, caused the webhook failure, or was independent of that failure.",
+    "first_divergence": "At 2026-08-23T15:05:00Z, gateway event GE-12001 captured PI-1012 with invoice_reference INV-9912 rather than the case invoice INV-1012. This precedes webhook failure WH-12001 at 2026-08-23T15:05:04Z.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1012",
+        "claim": "The case invoice remained unpaid after the capture event.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "690.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-12001",
+        "claim": "The gateway recorded a capture for PI-1012 but referenced a different invoice identifier.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-9912"
+          },
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1012"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "690.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-12001",
+        "claim": "The webhook corresponding to the gateway capture failed after the mismatched gateway event.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-12001"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "500"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-12001",
+        "claim": "Settlement was still pending and therefore did not establish completion of the financial lifecycle.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1012"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "pending"
+          },
+          {
+            "field": "gross_amount",
+            "operator": "eq",
+            "value": "690.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.95,
+    "recommended_action": "Require human review of the payment-creation or gateway-request mapping and detailed webhook failure logs. Confirm payment ownership and intended invoice association before any webhook retry, invoice update, refund, or ledger/settlement mutation.",
+    "requires_human_approval": true,
+    "abstained": true,
+    "abstention_reason": "Available records establish the first observable divergence but do not establish causality. Payment and invoice audit trails are absent, and the webhook record lacks failure detail needed to distinguish mapping failure from an unrelated processing failure."
+  },
+  "trajectory": {
+    "case_id": "PAY-012",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The disagreement may arise from a divergence between the external payment lifecycle and the invoice's recorded state; first establish the case's known entities and reported observations before testing specific causes.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_case_context.",
+        "tool_call": {
+          "tool_name": "get_case_context",
+          "arguments": {
+            "case_id": "PAY-012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"case_id\": \"PAY-012\", \"invoice_ids\": [\"INV-1012\"], \"payment_ids\": [\"PI-1012\"]}",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The disagreement may arise from a divergence between the external payment lifecycle and the invoice's recorded state; inspect the invoice state before comparing it with gateway and downstream records.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"690.00\", \"case_id\": \"PAY-012\", \"created_at\": \"2026-08-23T15:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-012\", \"invoice_id\": \"INV-1012\", \"status\": \"unpaid\", \"updated_at\": \"2026-08-23T15:10:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1012"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The invoice is recorded as unpaid; inspect gateway events to determine whether the external payment lifecycle reached a successful state and identify the earliest observable divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"690.00\", \"case_id\": \"PAY-012\", \"currency\": \"USD\", \"event_id\": \"GE-12001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-9912\", \"occurred_at\": \"2026-08-23T15:05:00Z\", \"payment_id\": \"PI-1012\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-12001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "The gateway capture references INV-9912 rather than the case invoice INV-1012. Inspect webhook delivery records to determine whether that mismatched reference propagated downstream and whether webhook processing is the first defensible divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[{\"case_id\": \"PAY-012\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-12001\", \"http_status\": 500, \"occurred_at\": \"2026-08-23T15:05:04Z\", \"payment_id\": \"PI-1012\", \"processing_status\": \"failed\", \"webhook_id\": \"WH-12001\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "WH-12001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H3",
+        "content": "The gateway invoice-reference mismatch and the failed webhook are both observed anomalies, but causality is not yet established. Inspect the payment's audit trail to determine how PI-1012 became associated with INV-9912 and whether that mapping preceded or caused downstream processing failure.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "tool_call",
+        "hypothesis_id": "H3",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "observation",
+        "hypothesis_id": "H3",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H4",
+        "content": "The gateway capture does not by itself establish completion of the payment lifecycle. Inspect settlement records to determine whether PI-1012 financially settled despite the unpaid invoice, mismatched invoice reference, and failed webhook.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 17,
+        "step_type": "tool_call",
+        "hypothesis_id": "H4",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 18,
+        "step_type": "observation",
+        "hypothesis_id": "H4",
+        "content": "[{\"case_id\": \"PAY-012\", \"currency\": \"USD\", \"expected_by\": \"2026-08-26T23:59:59Z\", \"gross_amount\": \"690.00\", \"net_amount\": \"669.30\", \"payment_id\": \"PI-1012\", \"settled_at\": null, \"settlement_id\": \"SET-12001\", \"status\": \"pending\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "SET-12001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 19,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H5",
+        "content": "PI-1012 may have been mapped to a different invoice, INV-9912, before the failed webhook. Inspect INV-9912 to determine whether it is a valid invoice and whether its state provides evidence of misapplication; this will help distinguish a mapping divergence from an isolated webhook-processing failure.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 20,
+        "step_type": "tool_call",
+        "hypothesis_id": "H5",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-9912"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 21,
+        "step_type": "observation",
+        "hypothesis_id": "H5",
+        "content": "null",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 22,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H6",
+        "content": "The invoice audit trail may show whether the capture webhook attempted to update INV-1012, was rejected because of the mismatched INV-9912 reference, or never reached invoice processing; this can help distinguish mapping failure from an unrelated webhook failure.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 23,
+        "step_type": "tool_call",
+        "hypothesis_id": "H6",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 24,
+        "step_type": "observation",
+        "hypothesis_id": "H6",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 25,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H7",
+        "content": "PI-1012 may have been refunded or reversed after capture, which would affect whether the external payment lifecycle remained successful and could explain part of the state disagreement independently of the invoice-reference mismatch and failed webhook.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 26,
+        "step_type": "tool_call",
+        "hypothesis_id": "H7",
+        "content": "Call get_refunds.",
+        "tool_call": {
+          "tool_name": "get_refunds",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 27,
+        "step_type": "observation",
+        "hypothesis_id": "H7",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 28,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H8",
+        "content": "A consolidated payment timeline may reveal an earlier payment-state or mapping transition, or additional lifecycle event, that distinguishes whether the invalid gateway invoice reference or the failed webhook was the first defensible divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 29,
+        "step_type": "tool_call",
+        "hypothesis_id": "H8",
+        "content": "Call get_payment_timeline.",
+        "tool_call": {
+          "tool_name": "get_payment_timeline",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 30,
+        "step_type": "observation",
+        "hypothesis_id": "H8",
+        "content": "[{\"event_type\": \"payment_captured\", \"record_id\": \"GE-12001\", \"source\": \"gateway\", \"timestamp\": \"2026-08-23T15:05:00+00:00\"}, {\"event_type\": \"payment.captured\", \"http_status\": 500, \"processing_status\": \"failed\", \"record_id\": \"WH-12001\", \"source\": \"webhook\", \"timestamp\": \"2026-08-23T15:05:04+00:00\"}]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 31,
+        "step_type": "final",
+        "hypothesis_id": null,
+        "content": "Available records establish the first observable divergence but do not establish causality. Payment and invoice audit trails are absent, and the webhook record lacks failure detail needed to distinguish mapping failure from an unrelated processing failure.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "abstain"
+      }
+    ],
+    "completed": true,
+    "abstained": true
+  }
+}

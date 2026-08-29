@@ -1,0 +1,391 @@
+{
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-012",
+  "result": {
+    "case_id": "PAY-012",
+    "reported_issue": "Systems disagree about whether the payment was processed successfully.",
+    "hypotheses": [],
+    "finding": null,
+    "root_cause": null,
+    "first_divergence": "Gateway event GE-12001 recorded an incorrect invoice reference 'INV-9912' instead of 'INV-1012'.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1012",
+        "claim": "Invoice INV-1012 is in unpaid status.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-12001",
+        "claim": "Gateway event GE-12001 has an incorrect invoice reference of INV-9912.",
+        "assertions": [
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-9912"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-12001",
+        "claim": "Webhook event WH-12001 failed with HTTP status 500 and processing status failed.",
+        "assertions": [
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "500"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-12001",
+        "claim": "Settlement SET-12001 is pending for the payment.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "pending"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.0,
+    "recommended_action": "Escalate for human review and collect additional distinguishing evidence.",
+    "requires_human_approval": true,
+    "abstained": true,
+    "abstention_reason": "Multiple plausible causal anomalies remain and no verified evidence explicitly distinguishes their causal relationship."
+  },
+  "trajectory": {
+    "case_id": "PAY-012",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_case_context.",
+        "tool_call": {
+          "tool_name": "get_case_context",
+          "arguments": {
+            "case_id": "PAY-012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "{\"case_id\": \"PAY-012\", \"invoice_ids\": [\"INV-1012\"], \"payment_ids\": [\"PI-1012\"]}",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "{\"amount\": \"690.00\", \"case_id\": \"PAY-012\", \"created_at\": \"2026-08-23T15:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-012\", \"invoice_id\": \"INV-1012\", \"status\": \"unpaid\", \"updated_at\": \"2026-08-23T15:10:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1012"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_payment_timeline.",
+        "tool_call": {
+          "tool_name": "get_payment_timeline",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "[{\"event_type\": \"payment_captured\", \"record_id\": \"GE-12001\", \"source\": \"gateway\", \"timestamp\": \"2026-08-23T15:05:00+00:00\"}, {\"event_type\": \"payment.captured\", \"http_status\": 500, \"processing_status\": \"failed\", \"record_id\": \"WH-12001\", \"source\": \"webhook\", \"timestamp\": \"2026-08-23T15:05:04+00:00\"}]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "[{\"amount\": \"690.00\", \"case_id\": \"PAY-012\", \"currency\": \"USD\", \"event_id\": \"GE-12001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-9912\", \"occurred_at\": \"2026-08-23T15:05:00Z\", \"payment_id\": \"PI-1012\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-12001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "[{\"case_id\": \"PAY-012\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-12001\", \"http_status\": 500, \"occurred_at\": \"2026-08-23T15:05:04Z\", \"payment_id\": \"PI-1012\", \"processing_status\": \"failed\", \"webhook_id\": \"WH-12001\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "WH-12001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events, possibly due to an incorrect invoice reference in the gateway event.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 17,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-9912"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 18,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "null",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 19,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events, possibly due to an incorrect invoice reference in the gateway event.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 20,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 21,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 22,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent between the internal ledger, gateway, and webhook events, possibly due to an incorrect invoice reference in the gateway event.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 23,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 24,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "[{\"case_id\": \"PAY-012\", \"currency\": \"USD\", \"expected_by\": \"2026-08-26T23:59:59Z\", \"gross_amount\": \"690.00\", \"net_amount\": \"669.30\", \"payment_id\": \"PI-1012\", \"settled_at\": null, \"settlement_id\": \"SET-12001\", \"status\": \"pending\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "SET-12001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 25,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H-1",
+        "content": "The payment state is inconsistent because the gateway event contains an incorrect invoice reference (INV-9912 instead of INV-1012), which caused the webhook processing to fail with a 500 error when trying to resolve the non-existent invoice.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 26,
+        "step_type": "tool_call",
+        "hypothesis_id": "H-1",
+        "content": "Call get_refunds.",
+        "tool_call": {
+          "tool_name": "get_refunds",
+          "arguments": {
+            "payment_id": "PI-1012"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 27,
+        "step_type": "observation",
+        "hypothesis_id": "H-1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 28,
+        "step_type": "final",
+        "hypothesis_id": null,
+        "content": "Conclusion safety gate rejected the proposed causal conclusion: Multiple plausible causal anomalies remain and no verified evidence explicitly distinguishes their causal relationship.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "abstain"
+      }
+    ],
+    "completed": true,
+    "abstained": true
+  }
+}

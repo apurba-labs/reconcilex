@@ -1,0 +1,275 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-008",
+  "result": {
+    "case_id": "PAY-008",
+    "reported_issue": "Gateway shows a successful payment while the invoice remains unpaid.",
+    "hypotheses": [],
+    "finding": "Payment PI-1008 was captured and its webhook processed, but it was not applied to invoice INV-1008. The invoice therefore remained unpaid.",
+    "root_cause": "Currency mismatch: the gateway captured the payment in USD while invoice INV-1008 is denominated in EUR, causing payment application to fail.",
+    "first_divergence": "At 2026-08-23T14:03:06Z, audit event AUD-8002 recorded the failed payment application due to invoice EUR versus payment USD, after successful capture and webhook processing.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-8001",
+        "claim": "The gateway captured payment PI-1008 for USD 1200.00 with invoice reference INV-1008.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "1200.00"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1008"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-8001",
+        "claim": "The capture webhook was delivered successfully and processed.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-8001"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "200"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1008",
+        "claim": "The invoice is denominated in EUR and remains unpaid.",
+        "assertions": [
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "EUR"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "1200.00"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-8002",
+        "claim": "Application of the payment to the invoice failed explicitly because the invoice and payment currencies differed.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_application"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "currency_mismatch_invoice_EUR_payment_USD"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.99,
+    "recommended_action": "Escalate for human review to determine why the payment was captured in the wrong currency and choose the appropriate controlled remediation, such as refunding and recollecting in EUR or another approved reconciliation path. Do not mutate the invoice or payment automatically.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "trajectory": {
+    "case_id": "PAY-008",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment succeeded at the gateway, but a downstream lifecycle failure prevented the invoice from being marked paid.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1008"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"1200.00\", \"case_id\": \"PAY-008\", \"currency\": \"USD\", \"event_id\": \"GE-8001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1008\", \"occurred_at\": \"2026-08-23T14:03:00Z\", \"payment_id\": \"PI-1008\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-8001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment was captured by the gateway, but webhook delivery or downstream processing may have failed before the invoice was marked paid.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1008"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"case_id\": \"PAY-008\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-8001\", \"http_status\": 200, \"occurred_at\": \"2026-08-23T14:03:04Z\", \"payment_id\": \"PI-1008\", \"processing_status\": \"processed\", \"webhook_id\": \"WH-8001\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "WH-8001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "Webhook delivery and processing succeeded, so the next step is to verify the invoice\u2019s current state and payment association to locate the first downstream divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1008"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"1200.00\", \"case_id\": \"PAY-008\", \"created_at\": \"2026-08-23T14:00:00Z\", \"currency\": \"EUR\", \"customer_id\": \"CUS-008\", \"invoice_id\": \"INV-1008\", \"status\": \"unpaid\", \"updated_at\": \"2026-08-23T14:06:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1008"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "The gateway payment currency (USD) differs from the invoice currency (EUR), and downstream processing may have rejected or declined to associate the captured payment with the invoice. Invoice audit events are needed to test whether this mismatch caused the first divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1008"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[{\"audit_id\": \"AUD-8002\", \"case_id\": \"PAY-008\", \"entity_id\": \"INV-1008\", \"entity_type\": \"invoice\", \"event_type\": \"payment_application\", \"occurred_at\": \"2026-08-23T14:03:06Z\", \"reason\": \"currency_mismatch_invoice_EUR_payment_USD\", \"result\": \"failed\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-8002"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "decision",
+        "hypothesis_id": "H2",
+        "content": "Audit event AUD-8002 explicitly records a failed payment application caused by invoice currency EUR versus payment currency USD. This establishes the first defensible downstream divergence after gateway capture and webhook processing.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "support"
+      },
+      {
+        "step_number": 14,
+        "step_type": "final",
+        "hypothesis_id": "H2",
+        "content": "Payment PI-1008 was captured and its webhook processed, but it was not applied to invoice INV-1008. The invoice therefore remained unpaid.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "complete"
+      }
+    ],
+    "completed": true,
+    "abstained": false
+  }
+}
