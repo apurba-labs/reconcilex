@@ -1,0 +1,445 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-007",
+  "result": {
+    "case_id": "PAY-007",
+    "reported_issue": "A captured payment has not appeared in settlement.",
+    "hypotheses": [],
+    "finding": "PI-1007 was captured, INV-1007 was marked paid, and SET-7001 was created, but the settlement remained pending beyond 2026-08-22T23:59:59Z and was still pending at the 2026-08-25 audit check.",
+    "root_cause": "Undetermined. Available records do not establish whether the overdue pending settlement resulted from a processor hold, routing issue, webhook failure, operational failure, or another cause.",
+    "first_divergence": "The first defensible lifecycle divergence is SET-7001 failing to progress from pending by its expected-by timestamp; the evidence does not establish the causal event preceding that divergence.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-7001",
+        "claim": "The gateway recorded capture of PI-1007 for INV-1007.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "620.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1007"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1007",
+        "claim": "The associated invoice reached paid status with matching amount and currency.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "620.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-7001",
+        "claim": "A later payment-level check confirmed the payment was still absent from settlement after the expected window, but did not identify a cause.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "settlement_status_check"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "pending"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "payment_absent_from_settlement_after_expected_window"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.97,
+    "recommended_action": "Escalate SET-7001 to human settlement operations or the payment processor for batch, routing, hold, and processor-side status evidence. Do not mutate invoice, payment, settlement, refund, or ledger state until ownership and causality are confirmed.",
+    "requires_human_approval": true,
+    "abstained": true,
+    "abstention_reason": "The approved evidence confirms an overdue pending settlement but lacks the processor or operational evidence needed to distinguish among multiple plausible root causes."
+  },
+  "trajectory": {
+    "case_id": "PAY-007",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment was successfully captured at the gateway but no corresponding settlement record was created.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"620.00\", \"case_id\": \"PAY-007\", \"currency\": \"USD\", \"event_id\": \"GE-7001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1007\", \"occurred_at\": \"2026-08-19T09:05:00Z\", \"payment_id\": \"PI-1007\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-7001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment was successfully captured at the gateway but no corresponding settlement record was created.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"case_id\": \"PAY-007\", \"currency\": \"USD\", \"expected_by\": \"2026-08-22T23:59:59Z\", \"gross_amount\": \"620.00\", \"net_amount\": \"601.40\", \"payment_id\": \"PI-1007\", \"settled_at\": null, \"settlement_id\": \"SET-7001\", \"status\": \"pending\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "SET-7001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "decision",
+        "hypothesis_id": "H1",
+        "content": "The gateway capture is confirmed, but H1's claim that no settlement record was created is contradicted by SET-7001. The settlement record exists and remains pending after its expected-by timestamp. Revise the hypothesis to investigate why the existing settlement did not progress beyond pending.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "revise"
+      },
+      {
+        "step_number": 8,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "SET-7001 remained pending beyond its expected-by timestamp because settlement processing was explicitly held, blocked, or failed after the settlement record was created.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "SET-7001"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "SET-7001 remained pending beyond its expected-by timestamp because settlement processing was explicitly held, blocked, or failed after the settlement record was created.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_payment_timeline.",
+        "tool_call": {
+          "tool_name": "get_payment_timeline",
+          "arguments": {
+            "payment_id": "PI-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[{\"event_type\": \"payment_captured\", \"record_id\": \"GE-7001\", \"source\": \"gateway\", \"timestamp\": \"2026-08-19T09:05:00+00:00\"}]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "SET-7001 may have remained pending because a post-capture or settlement-related webhook was not delivered or processed, preventing downstream settlement progression.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 17,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H3",
+        "content": "A post-capture refund may have affected settlement progression for PI-1007; refund records must be checked before attributing the pending settlement to a webhook or processing failure.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 18,
+        "step_type": "tool_call",
+        "hypothesis_id": "H3",
+        "content": "Call get_refunds.",
+        "tool_call": {
+          "tool_name": "get_refunds",
+          "arguments": {
+            "payment_id": "PI-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 19,
+        "step_type": "observation",
+        "hypothesis_id": "H3",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 20,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H4",
+        "content": "The invoice state or payment association may show whether the first downstream divergence occurred between gateway capture and internal invoice processing, before settlement remained pending.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 21,
+        "step_type": "tool_call",
+        "hypothesis_id": "H4",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 22,
+        "step_type": "observation",
+        "hypothesis_id": "H4",
+        "content": "{\"amount\": \"620.00\", \"case_id\": \"PAY-007\", \"created_at\": \"2026-08-19T09:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-007\", \"invoice_id\": \"INV-1007\", \"status\": \"paid\", \"updated_at\": \"2026-08-19T09:10:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1007"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 23,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H5",
+        "content": "Payment-level audit events may identify the first post-capture processing transition, hold, or failure that caused SET-7001 to remain pending beyond its expected-by timestamp.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 24,
+        "step_type": "tool_call",
+        "hypothesis_id": "H5",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "PI-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 25,
+        "step_type": "observation",
+        "hypothesis_id": "H5",
+        "content": "[{\"audit_id\": \"AUD-7001\", \"case_id\": \"PAY-007\", \"entity_id\": \"PI-1007\", \"entity_type\": \"payment\", \"event_type\": \"settlement_status_check\", \"occurred_at\": \"2026-08-25T11:00:00Z\", \"reason\": \"payment_absent_from_settlement_after_expected_window\", \"result\": \"pending\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-7001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 26,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H6",
+        "content": "Invoice-level audit events may reveal whether the paid transition for INV-1007 recorded a downstream processing failure, routing issue, or payment association anomaly between gateway capture and the overdue pending settlement.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 27,
+        "step_type": "tool_call",
+        "hypothesis_id": "H6",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 28,
+        "step_type": "observation",
+        "hypothesis_id": "H6",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 29,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H7",
+        "content": "Case-level context may contain routing, ownership, or exception metadata needed to distinguish among unresolved causes of SET-7001 remaining pending after its expected settlement window.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 30,
+        "step_type": "tool_call",
+        "hypothesis_id": "H7",
+        "content": "Call get_case_context.",
+        "tool_call": {
+          "tool_name": "get_case_context",
+          "arguments": {
+            "case_id": "PAY-007"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 31,
+        "step_type": "observation",
+        "hypothesis_id": "H7",
+        "content": "{\"case_id\": \"PAY-007\", \"invoice_ids\": [\"INV-1007\"], \"payment_ids\": [\"PI-1007\"]}",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 32,
+        "step_type": "final",
+        "hypothesis_id": null,
+        "content": "The approved evidence confirms an overdue pending settlement but lacks the processor or operational evidence needed to distinguish among multiple plausible root causes.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "abstain"
+      }
+    ],
+    "completed": true,
+    "abstained": true
+  }
+}

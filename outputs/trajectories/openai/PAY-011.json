@@ -1,0 +1,197 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-011",
+  "result": {
+    "case_id": "PAY-011",
+    "reported_issue": "A recent captured payment is not yet visible in settlement.",
+    "hypotheses": [],
+    "finding": "PI-1011 was captured and has settlement SET-11001 in pending status. At the case observation time of 2026-08-25T12:00:00Z, the settlement was still within its recorded processing window ending 2026-08-27T23:59:59Z.",
+    "root_cause": "No settlement-processing failure is established. The available records show an in-progress settlement that was not yet due at the observation time.",
+    "first_divergence": "No lifecycle divergence is established: the gateway capture is followed by a pending settlement record within its expected window.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-11001",
+        "claim": "The gateway recorded a completed capture for PI-1011.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1011"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "410.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1011"
+          },
+          {
+            "field": "occurred_at",
+            "operator": "eq",
+            "value": "2026-08-24T08:04:00Z"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-11001",
+        "claim": "A settlement record exists but is pending, with its expected completion time after the case observation time.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1011"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "pending"
+          },
+          {
+            "field": "settled_at",
+            "operator": "eq",
+            "value": "null"
+          },
+          {
+            "field": "gross_amount",
+            "operator": "eq",
+            "value": "410.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "expected_by",
+            "operator": "eq",
+            "value": "2026-08-27T23:59:59Z"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.98,
+    "recommended_action": "Monitor SET-11001 through 2026-08-27T23:59:59Z. Reinvestigate only if it remains pending after that deadline; do not mutate financial state based on the current evidence.",
+    "requires_human_approval": false,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "trajectory": {
+    "case_id": "PAY-011",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The gateway may not show a completed capture for PI-1011, so the reported capture status must be verified before investigating settlement processing.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1011"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"410.00\", \"case_id\": \"PAY-011\", \"currency\": \"USD\", \"event_id\": \"GE-11001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1011\", \"occurred_at\": \"2026-08-24T08:04:00Z\", \"payment_id\": \"PI-1011\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-11001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "decision",
+        "hypothesis_id": "H1",
+        "content": "Gateway event GE-11001 records payment_captured for PI-1011, so the hypothesis that the gateway lacks a completed capture is contradicted.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "reject"
+      },
+      {
+        "step_number": 5,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "PI-1011 may have a settlement record that is pending, delayed, or otherwise not yet completed after the confirmed gateway capture.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1011"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[{\"case_id\": \"PAY-011\", \"currency\": \"USD\", \"expected_by\": \"2026-08-27T23:59:59Z\", \"gross_amount\": \"410.00\", \"net_amount\": \"397.70\", \"payment_id\": \"PI-1011\", \"settled_at\": null, \"settlement_id\": \"SET-11001\", \"status\": \"pending\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "SET-11001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "decision",
+        "hypothesis_id": "H2",
+        "content": "Settlement SET-11001 exists for PI-1011 with status pending and no settled_at timestamp. Its expected_by time is 2026-08-27T23:59:59Z, which is after the case observation time of 2026-08-25T12:00:00Z; therefore, the payment is captured but still within its recorded settlement window.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "support"
+      },
+      {
+        "step_number": 9,
+        "step_type": "final",
+        "hypothesis_id": "H2",
+        "content": "PI-1011 was captured and has settlement SET-11001 in pending status. At the case observation time of 2026-08-25T12:00:00Z, the settlement was still within its recorded processing window ending 2026-08-27T23:59:59Z.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "complete"
+      }
+    ],
+    "completed": true,
+    "abstained": false
+  }
+}

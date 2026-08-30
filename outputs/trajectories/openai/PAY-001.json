@@ -1,0 +1,291 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-001",
+  "result": {
+    "case_id": "PAY-001",
+    "reported_issue": "Customer reports a successful payment, but invoice INV-1001 remains unpaid.",
+    "hypotheses": [],
+    "finding": "PI-1001 was captured for USD 500.00 against INV-1001, but the captured-payment notification failed during invoice-side processing. INV-1001 consequently remained recorded as unpaid.",
+    "root_cause": "Invoice-side processing of the payment.captured webhook failed when the upstream invoice service returned HTTP 500.",
+    "first_divergence": "WH-1001 at 2026-08-20T10:03:05Z: processing of the payment.captured notification for GE-1002 failed with HTTP 500, followed by AUD-1001 confirming invoice-side processing failure.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1001",
+        "claim": "The invoice remained unpaid after the payment lifecycle events.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "500.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-1002",
+        "claim": "The gateway captured PI-1001 for INV-1001.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1001"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1001"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "500.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-1001",
+        "claim": "The notification corresponding to captured gateway event GE-1002 failed processing with HTTP 500.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-1002"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment.captured"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "500"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-1001",
+        "claim": "Invoice-side webhook processing failed because the upstream invoice service returned HTTP 500.",
+        "assertions": [
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "INV-1001"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_webhook_processing"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "upstream_invoice_service_http_500"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.99,
+    "recommended_action": "After verifying current state and idempotency protections, obtain human approval to retry or replay the failed captured-payment processing and then confirm that INV-1001 transitions to paid without duplicating the payment.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "trajectory": {
+    "case_id": "PAY-001",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The invoice remains unpaid because its recorded payment state or payment linkage diverged from the lifecycle of payment PI-1001.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1001"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"500.00\", \"case_id\": \"PAY-001\", \"created_at\": \"2026-08-20T10:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-001\", \"invoice_id\": \"INV-1001\", \"status\": \"unpaid\", \"updated_at\": \"2026-08-20T10:05:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The invoice remains unpaid because its recorded payment state or payment linkage diverged from the lifecycle of payment PI-1001.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1001"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"500.00\", \"case_id\": \"PAY-001\", \"currency\": \"USD\", \"event_id\": \"GE-1001\", \"event_type\": \"payment_authorized\", \"invoice_reference\": \"INV-1001\", \"occurred_at\": \"2026-08-20T10:02:00Z\", \"payment_id\": \"PI-1001\"}, {\"amount\": \"500.00\", \"case_id\": \"PAY-001\", \"currency\": \"USD\", \"event_id\": \"GE-1002\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1001\", \"occurred_at\": \"2026-08-20T10:03:00Z\", \"payment_id\": \"PI-1001\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-1001",
+          "GE-1002"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The gateway captured PI-1001 for INV-1001, but the invoice may not have received or processed the corresponding webhook notification.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1001"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"case_id\": \"PAY-001\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-1002\", \"http_status\": 500, \"occurred_at\": \"2026-08-20T10:03:05Z\", \"payment_id\": \"PI-1001\", \"processing_status\": \"failed\", \"webhook_id\": \"WH-1001\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "WH-1001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The captured-payment webhook failure was the first divergence and prevented INV-1001 from transitioning to paid; invoice audit events are needed to determine whether the webhook was processed, retried, or followed by another state change.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1001"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"audit_id\": \"AUD-1001\", \"case_id\": \"PAY-001\", \"entity_id\": \"INV-1001\", \"entity_type\": \"invoice\", \"event_type\": \"payment_webhook_processing\", \"occurred_at\": \"2026-08-20T10:03:06Z\", \"reason\": \"upstream_invoice_service_http_500\", \"result\": \"failed\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-1001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "decision",
+        "hypothesis_id": "H1",
+        "content": "GE-1002 records capture of PI-1001 for INV-1001. WH-1001 then records failed processing of the corresponding payment.captured notification with HTTP 500, and AUD-1001 directly confirms invoice-side webhook processing failed because the upstream invoice service returned HTTP 500. INV-1001 remained unpaid afterward. This establishes the failed webhook-processing step as the first observed divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "support"
+      },
+      {
+        "step_number": 14,
+        "step_type": "final",
+        "hypothesis_id": "H1",
+        "content": "PI-1001 was captured for USD 500.00 against INV-1001, but the captured-payment notification failed during invoice-side processing. INV-1001 consequently remained recorded as unpaid.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "complete"
+      }
+    ],
+    "completed": true,
+    "abstained": false
+  }
+}

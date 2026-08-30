@@ -1,0 +1,553 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-009",
+  "result": {
+    "case_id": "PAY-009",
+    "reported_issue": "A customer payment exists, but the expected invoice remains unpaid.",
+    "hypotheses": [],
+    "finding": "PI-1009 was captured for USD 350.00 with invoice_reference INV-1909, propagated successfully, resolved to that invoice, and applied there. INV-1909 is paid and belongs to CUS-099, while expected invoice INV-1009 belongs to CUS-009 and remains unpaid. No observed record establishes where the INV-1909 reference originated, and no settlement or refund record was returned, so final funds disposition is also unconfirmed.",
+    "root_cause": null,
+    "first_divergence": "The earliest defensible observed divergence is gateway event GE-9001 at 2026-08-21T09:05:00Z, where PI-1009 was already captured with invoice_reference INV-1909 rather than expected invoice INV-1009.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1009",
+        "claim": "The expected invoice remained unpaid.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "350.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "customer_id",
+            "operator": "eq",
+            "value": "CUS-009"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-9001",
+        "claim": "PI-1009 was captured with a reference to alternate invoice INV-1909.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1909"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "350.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-9001",
+        "claim": "The capture webhook was successfully processed downstream.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-9001"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "200"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-9001",
+        "claim": "The payment reference was resolved to INV-1909 after capture.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_reference_resolved"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "gateway_reference_resolved_to_INV-1909"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-9002",
+        "claim": "The referenced alternate invoice received the payment application.",
+        "assertions": [
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "INV-1909"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_application"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "payment_applied_to_referenced_invoice"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1909",
+        "claim": "The alternate invoice is paid and belongs to a different customer than INV-1009.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          },
+          {
+            "field": "customer_id",
+            "operator": "eq",
+            "value": "CUS-099"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "350.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.97,
+    "recommended_action": "Require human review of upstream payment-initiation/reference-assignment records and gateway settlement reporting. Confirm customer ownership and final funds disposition before considering any invoice reassignment, refund, or ledger correction; do not mutate financial state based on the current evidence.",
+    "requires_human_approval": true,
+    "abstained": true,
+    "abstention_reason": "Available evidence proves the mapping divergence and its downstream propagation but cannot distinguish among plausible upstream causes or establish who owned the payment reference. Final settlement status is also unresolved."
+  },
+  "trajectory": {
+    "case_id": "PAY-009",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment and invoice diverged because the payment was not successfully applied to INV-1009; first verify the case's known identifiers and reported state before testing lifecycle records.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_case_context.",
+        "tool_call": {
+          "tool_name": "get_case_context",
+          "arguments": {
+            "case_id": "PAY-009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"case_id\": \"PAY-009\", \"invoice_ids\": [\"INV-1009\", \"INV-1909\"], \"payment_ids\": [\"PI-1009\"]}",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment was not successfully applied to INV-1009; inspect the primary invoice to establish its current state and any recorded payment linkage before evaluating the payment lifecycle or alternate invoice INV-1909.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"350.00\", \"case_id\": \"PAY-009\", \"created_at\": \"2026-08-21T09:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-009\", \"invoice_id\": \"INV-1009\", \"status\": \"unpaid\", \"updated_at\": \"2026-08-21T09:10:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1009"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment may have succeeded at the gateway but failed to be applied to INV-1009; inspect gateway events for PI-1009 to establish the payment's authoritative transaction state and invoice-related metadata.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"350.00\", \"case_id\": \"PAY-009\", \"currency\": \"USD\", \"event_id\": \"GE-9001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1909\", \"occurred_at\": \"2026-08-21T09:05:00Z\", \"payment_id\": \"PI-1009\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-9001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "PI-1009 may have been associated with alternate invoice INV-1909 rather than primary invoice INV-1009; inspect INV-1909 to determine whether its identity, customer, amount, currency, and payment state support a mapping divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1909"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "{\"amount\": \"350.00\", \"case_id\": \"PAY-009\", \"created_at\": \"2026-08-21T08:30:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-099\", \"invoice_id\": \"INV-1909\", \"status\": \"paid\", \"updated_at\": \"2026-08-21T09:06:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1909"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "PI-1009 was associated with INV-1909 before invoice application; inspect webhook events to determine whether the gateway's INV-1909 reference was propagated downstream or whether a later mapping divergence occurred.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[{\"case_id\": \"PAY-009\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-9001\", \"http_status\": 200, \"occurred_at\": \"2026-08-21T09:05:03Z\", \"payment_id\": \"PI-1009\", \"processing_status\": \"processed\", \"webhook_id\": \"WH-9001\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "WH-9001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "PI-1009 was mapped to INV-1909 before or during capture, but the cause and ownership of that mapping remain unestablished; inspect the payment's audit history for creation, invoice-association, or mapping-change records that can identify the first defensible divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 17,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "PI-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 18,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[{\"audit_id\": \"AUD-9001\", \"case_id\": \"PAY-009\", \"entity_id\": \"PI-1009\", \"entity_type\": \"payment\", \"event_type\": \"payment_reference_resolved\", \"occurred_at\": \"2026-08-21T09:05:04Z\", \"reason\": \"gateway_reference_resolved_to_INV-1909\", \"result\": \"processed\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-9001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 19,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H3",
+        "content": "An invoice-side action may have linked PI-1009 to INV-1909; inspect INV-1909's audit history for the source, actor, or prior mapping that caused the gateway reference to resolve to the alternate customer's invoice.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 20,
+        "step_type": "tool_call",
+        "hypothesis_id": "H3",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1909"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 21,
+        "step_type": "observation",
+        "hypothesis_id": "H3",
+        "content": "[{\"audit_id\": \"AUD-9002\", \"case_id\": \"PAY-009\", \"entity_id\": \"INV-1909\", \"entity_type\": \"invoice\", \"event_type\": \"payment_application\", \"occurred_at\": \"2026-08-21T09:05:05Z\", \"reason\": \"payment_applied_to_referenced_invoice\", \"result\": \"processed\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-9002"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 22,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H4",
+        "content": "The incorrect INV-1909 reference existed by gateway capture, but the records observed only show downstream resolution and application, not how the reference was created; inspect INV-1009's audit history for an intended PI-1009 association, reference change, or other evidence locating the first divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 23,
+        "step_type": "tool_call",
+        "hypothesis_id": "H4",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 24,
+        "step_type": "observation",
+        "hypothesis_id": "H4",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 25,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H4",
+        "content": "The incorrect INV-1909 reference may have been attached to PI-1009 before gateway capture; inspect the complete payment timeline for an earlier creation or association event that establishes the first divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 26,
+        "step_type": "tool_call",
+        "hypothesis_id": "H4",
+        "content": "Call get_payment_timeline.",
+        "tool_call": {
+          "tool_name": "get_payment_timeline",
+          "arguments": {
+            "payment_id": "PI-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 27,
+        "step_type": "observation",
+        "hypothesis_id": "H4",
+        "content": "[{\"event_type\": \"payment_captured\", \"record_id\": \"GE-9001\", \"source\": \"gateway\", \"timestamp\": \"2026-08-21T09:05:00+00:00\"}, {\"event_type\": \"payment.captured\", \"http_status\": 200, \"processing_status\": \"processed\", \"record_id\": \"WH-9001\", \"source\": \"webhook\", \"timestamp\": \"2026-08-21T09:05:03+00:00\"}]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 28,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H5",
+        "content": "PI-1009 was captured with a reference to INV-1909, but capture alone does not establish that the financial lifecycle completed; inspect settlement records to determine whether the funds settled before assessing remediation or concluding the payment's final state.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 29,
+        "step_type": "tool_call",
+        "hypothesis_id": "H5",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 30,
+        "step_type": "observation",
+        "hypothesis_id": "H5",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 31,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H5",
+        "content": "PI-1009 may have been refunded or reversed after capture, which could explain the absence of settlement and affects any remediation assessment; inspect refund records before concluding the payment's financial state.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 32,
+        "step_type": "tool_call",
+        "hypothesis_id": "H5",
+        "content": "Call get_refunds.",
+        "tool_call": {
+          "tool_name": "get_refunds",
+          "arguments": {
+            "payment_id": "PI-1009"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 33,
+        "step_type": "observation",
+        "hypothesis_id": "H5",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 34,
+        "step_type": "final",
+        "hypothesis_id": null,
+        "content": "Available evidence proves the mapping divergence and its downstream propagation but cannot distinguish among plausible upstream causes or establish who owned the payment reference. Final settlement status is also unresolved.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "abstain"
+      }
+    ],
+    "completed": true,
+    "abstained": true
+  }
+}

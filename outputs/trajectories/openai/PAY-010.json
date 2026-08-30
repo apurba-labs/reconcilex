@@ -1,0 +1,321 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-010",
+  "result": {
+    "case_id": "PAY-010",
+    "reported_issue": "Finance detected an unexpected duplicate internal payment effect.",
+    "hypotheses": [],
+    "finding": "The first observable divergence is at the webhook layer: one gateway capture GE-10001 is followed by two processed occurrences carrying the same webhook identifier WH-1010. This supports duplicate webhook processing as a symptom, but not as the proven cause of the reported duplicate internal payment effect.",
+    "root_cause": null,
+    "first_divergence": "At 2026-08-22T10:04:08Z, WH-1010 appears as processed a second time for the already processed gateway capture GE-10001.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1010",
+        "claim": "The invoice is recorded as paid for the same amount and currency as the single observed capture.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "525.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.96,
+    "recommended_action": "Require human review of internal payment-posting and webhook-consumer logs, including idempotency-key handling and records representing the alleged duplicate effect. Do not mutate invoice, payment, refund, settlement, or ledger state until ownership and causality are established.",
+    "requires_human_approval": true,
+    "abstained": true,
+    "abstention_reason": "Available records cannot connect the repeated webhook observation to the duplicate internal financial effect. No audit events or internal posting records are available, and missing settlement data cannot distinguish an incomplete lifecycle from absent settlement evidence."
+  },
+  "trajectory": {
+    "case_id": "PAY-010",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The duplicate internal payment effect may have resulted from duplicate or repeated processing within the payment lifecycle, rather than two distinct successful external payments.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_case_context.",
+        "tool_call": {
+          "tool_name": "get_case_context",
+          "arguments": {
+            "case_id": "PAY-010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"case_id\": \"PAY-010\", \"invoice_ids\": [\"INV-1010\"], \"payment_ids\": [\"PI-1010\"]}",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The duplicate internal payment effect may have resulted from duplicate or repeated processing within the payment lifecycle, rather than two distinct successful external payments.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"525.00\", \"case_id\": \"PAY-010\", \"created_at\": \"2026-08-22T10:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-010\", \"invoice_id\": \"INV-1010\", \"status\": \"paid\", \"updated_at\": \"2026-08-22T10:07:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1010"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The duplicate internal payment effect may have resulted from duplicate or repeated processing within the payment lifecycle, rather than two distinct successful external payments.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"525.00\", \"case_id\": \"PAY-010\", \"currency\": \"USD\", \"event_id\": \"GE-10001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1010\", \"occurred_at\": \"2026-08-22T10:04:00Z\", \"payment_id\": \"PI-1010\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-10001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "A single external capture may have been delivered or processed more than once internally, causing the duplicate payment effect.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"case_id\": \"PAY-010\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-10001\", \"http_status\": 200, \"occurred_at\": \"2026-08-22T10:04:03Z\", \"payment_id\": \"PI-1010\", \"processing_status\": \"processed\", \"webhook_id\": \"WH-1010\"}, {\"case_id\": \"PAY-010\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-10001\", \"http_status\": 200, \"occurred_at\": \"2026-08-22T10:04:08Z\", \"payment_id\": \"PI-1010\", \"processing_status\": \"processed\", \"webhook_id\": \"WH-1010\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "WH-1010"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The single gateway capture GE-10001 may have been processed twice internally because webhook WH-1010 appears twice as processed; audit events are needed to determine whether repeated webhook handling caused duplicate internal payment effects and to identify the first divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "PI-1010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "A single gateway capture may have produced duplicate internal payment effects after webhook WH-1010 was processed twice; the payment timeline is needed to locate the first observable divergence because no audit events were available.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 17,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_payment_timeline.",
+        "tool_call": {
+          "tool_name": "get_payment_timeline",
+          "arguments": {
+            "payment_id": "PI-1010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 18,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"event_type\": \"payment_captured\", \"record_id\": \"GE-10001\", \"source\": \"gateway\", \"timestamp\": \"2026-08-22T10:04:00+00:00\"}, {\"event_type\": \"payment.captured\", \"http_status\": 200, \"processing_status\": \"processed\", \"record_id\": \"WH-1010\", \"source\": \"webhook\", \"timestamp\": \"2026-08-22T10:04:03+00:00\"}, {\"event_type\": \"payment.captured\", \"http_status\": 200, \"processing_status\": \"processed\", \"record_id\": \"WH-1010\", \"source\": \"webhook\", \"timestamp\": \"2026-08-22T10:04:08+00:00\"}]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 19,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "A single gateway capture was processed twice at the webhook layer, but settlement evidence is needed to determine whether there was one external financial effect or more than one before attributing the duplicate internal effect to repeated webhook processing.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 20,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 21,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 22,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "A single external capture appears to have been processed twice at the webhook layer; refund records should be checked to rule out a downstream reversal or compensating financial event before determining whether the duplicate effect is confined to internal processing.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 23,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_refunds.",
+        "tool_call": {
+          "tool_name": "get_refunds",
+          "arguments": {
+            "payment_id": "PI-1010"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 24,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 25,
+        "step_type": "final",
+        "hypothesis_id": null,
+        "content": "Available records cannot connect the repeated webhook observation to the duplicate internal financial effect. No audit events or internal posting records are available, and missing settlement data cannot distinguish an incomplete lifecycle from absent settlement evidence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "abstain"
+      }
+    ],
+    "completed": true,
+    "abstained": true
+  }
+}

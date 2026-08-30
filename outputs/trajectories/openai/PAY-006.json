@@ -1,0 +1,278 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-006",
+  "result": {
+    "case_id": "PAY-006",
+    "reported_issue": "Customer believes payment succeeded, but the invoice remains unpaid.",
+    "hypotheses": [],
+    "finding": "PI-1006 did not complete the payment lifecycle. It was authorized for INV-1006, but the authorization expired before capture; consequently, the invoice remained unpaid.",
+    "root_cause": "The authorization for PI-1006 expired before capture.",
+    "first_divergence": "After gateway authorization at 2026-08-21T10:05:00Z, the payment failed to reach capture; the first explicit failure is AUD-6001 at 2026-08-24T10:05:00Z recording authorization_expired_before_capture.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1006",
+        "claim": "The invoice remains unpaid for USD 275.00.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "275.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-6001",
+        "claim": "The gateway recorded authorization, not completed capture or settlement, for PI-1006 referencing INV-1006.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_authorized"
+          },
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1006"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1006"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-6001",
+        "claim": "The payment authorization expired before capture, with a failed result.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "authorization_expired"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "authorization_expired_before_capture"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.99,
+    "recommended_action": "Do not mark the invoice paid based on the authorization. Inform the customer that no completed payment was recorded and, after human review and customer authorization, initiate a new payment attempt or provide retry instructions.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "trajectory": {
+    "case_id": "PAY-006",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The invoice remained unpaid because the known payment was not successfully applied to it, despite the customer's belief that payment succeeded.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1006"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"275.00\", \"case_id\": \"PAY-006\", \"created_at\": \"2026-08-21T10:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-006\", \"invoice_id\": \"INV-1006\", \"status\": \"unpaid\", \"updated_at\": \"2026-08-24T10:00:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1006"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The invoice remained unpaid because payment PI-1006 was not successfully applied to INV-1006; first determine whether the gateway recorded a successful payment transaction.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1006"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"275.00\", \"case_id\": \"PAY-006\", \"currency\": \"USD\", \"event_id\": \"GE-6001\", \"event_type\": \"payment_authorized\", \"invoice_reference\": \"INV-1006\", \"occurred_at\": \"2026-08-21T10:05:00Z\", \"payment_id\": \"PI-1006\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-6001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "PI-1006 was authorized for INV-1006 but may not have progressed to settlement, leaving the invoice unpaid.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1006"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "PI-1006 was authorized but may not have progressed through capture or downstream payment processing; inspect webhook events to determine whether a later payment-state event was emitted and delivered.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1006"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "PI-1006 was authorized but did not progress to capture or application; inspect the payment's audit history for the first recorded internal state transition or processing failure after authorization.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "PI-1006"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"audit_id\": \"AUD-6001\", \"case_id\": \"PAY-006\", \"entity_id\": \"PI-1006\", \"entity_type\": \"payment\", \"event_type\": \"authorization_expired\", \"occurred_at\": \"2026-08-24T10:05:00Z\", \"reason\": \"authorization_expired_before_capture\", \"result\": \"failed\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-6001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "decision",
+        "hypothesis_id": "H1",
+        "content": "The gateway recorded authorization only, and the payment audit explicitly records that the authorization expired before capture. The invoice remained unpaid. This establishes the first defensible divergence after authorization and explains why customer-perceived success did not complete the payment lifecycle.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "support"
+      },
+      {
+        "step_number": 17,
+        "step_type": "final",
+        "hypothesis_id": "H1",
+        "content": "PI-1006 did not complete the payment lifecycle. It was authorized for INV-1006, but the authorization expired before capture; consequently, the invoice remained unpaid.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "complete"
+      }
+    ],
+    "completed": true,
+    "abstained": false
+  }
+}

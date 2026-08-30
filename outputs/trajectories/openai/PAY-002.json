@@ -1,0 +1,446 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-002",
+  "result": {
+    "case_id": "PAY-002",
+    "reported_issue": "Customer reports being charged twice for a single invoice.",
+    "hypotheses": [],
+    "finding": "The duplicate charge is confirmed: two distinct USD 300.00 gateway captures for one USD 300.00 invoice propagated through separate webhooks and settled for USD 600.00. No refund record was observed.",
+    "root_cause": "Undetermined. The evidence establishes a second upstream gateway capture, but neither the empty payment audit trail nor the invoice audit event identifies whether it was caused by a retry, idempotency failure, or another distinct capture request.",
+    "first_divergence": "GE-2002, the second gateway capture at 2026-08-20T11:03:08Z, is the first defensible divergence. It occurred after AUD-2001 recorded the invoice as paid following the first capture.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1002",
+        "claim": "The single invoice was for USD 300.00 and is marked paid.",
+        "assertions": [
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "300.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-2001",
+        "claim": "The first USD 300.00 capture was recorded for PI-1002 and INV-1002.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "300.00"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1002"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-2001",
+        "claim": "The first capture had its own processed webhook mapped to GE-2001.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-2001"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-2002",
+        "claim": "The second capture had a separate processed webhook mapped to GE-2002.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-2002"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-2001",
+        "claim": "USD 600.00 settled for the payment, confirming both USD 300.00 captures completed financially.",
+        "assertions": [
+          {
+            "field": "gross_amount",
+            "operator": "eq",
+            "value": "600.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "settled"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.98,
+    "recommended_action": "Escalate for human review of the missing capture-request/idempotency records. After validating that no external refund or chargeback is pending, obtain human approval to remediate the excess USD 300.00 charge; do not perform an automated financial mutation.",
+    "requires_human_approval": true,
+    "abstained": true,
+    "abstention_reason": "The duplicate financial outcome and first divergence are established, but the available records cannot distinguish among plausible causes for initiation of the second capture."
+  },
+  "trajectory": {
+    "case_id": "PAY-002",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The reported duplicate charge may reflect multiple gateway charge events associated with the known payment or invoice; first establish the case context and identifiers before testing payment lifecycle records.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_case_context.",
+        "tool_call": {
+          "tool_name": "get_case_context",
+          "arguments": {
+            "case_id": "PAY-002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"case_id\": \"PAY-002\", \"invoice_ids\": [\"INV-1002\"], \"payment_ids\": [\"PI-1002\"]}",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The reported duplicate charge may reflect multiple gateway charge events associated with payment PI-1002; inspect gateway records to determine whether more than one charge was attempted or succeeded.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"300.00\", \"case_id\": \"PAY-002\", \"currency\": \"USD\", \"event_id\": \"GE-2001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1002\", \"occurred_at\": \"2026-08-20T11:03:00Z\", \"payment_id\": \"PI-1002\"}, {\"amount\": \"300.00\", \"case_id\": \"PAY-002\", \"currency\": \"USD\", \"event_id\": \"GE-2002\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1002\", \"occurred_at\": \"2026-08-20T11:03:08Z\", \"payment_id\": \"PI-1002\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-2001",
+          "GE-2002"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "Two gateway capture events may represent a duplicate charge against a single invoice, but the invoice record must be inspected to establish the expected amount and payment state before determining divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"300.00\", \"case_id\": \"PAY-002\", \"created_at\": \"2026-08-20T11:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-002\", \"invoice_id\": \"INV-1002\", \"status\": \"paid\", \"updated_at\": \"2026-08-20T11:07:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1002"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The two gateway capture events for PI-1002 may have produced two settled charges for a single USD 300.00 invoice; inspect settlement records to determine whether both captures completed financially.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"case_id\": \"PAY-002\", \"currency\": \"USD\", \"expected_by\": \"2026-08-22T23:59:59Z\", \"gross_amount\": \"600.00\", \"net_amount\": \"582.00\", \"payment_id\": \"PI-1002\", \"settled_at\": \"2026-08-21T09:00:00Z\", \"settlement_id\": \"SET-2001\", \"status\": \"settled\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "SET-2001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "The duplicate settled charge may have resulted from two distinct internal capture requests or a retry/idempotency failure. Inspect the payment audit trail to identify the earliest recorded action that produced the two gateway captures and determine whether causality can be established.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "PI-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H2",
+        "content": "With no payment audit events available, the earliest observable divergence may still be identifiable from the consolidated payment timeline, although the cause of the two captures may remain unresolved.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 17,
+        "step_type": "tool_call",
+        "hypothesis_id": "H2",
+        "content": "Call get_payment_timeline.",
+        "tool_call": {
+          "tool_name": "get_payment_timeline",
+          "arguments": {
+            "payment_id": "PI-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 18,
+        "step_type": "observation",
+        "hypothesis_id": "H2",
+        "content": "[{\"event_type\": \"payment_captured\", \"record_id\": \"GE-2001\", \"source\": \"gateway\", \"timestamp\": \"2026-08-20T11:03:00+00:00\"}, {\"event_type\": \"payment.captured\", \"http_status\": 200, \"processing_status\": \"processed\", \"record_id\": \"WH-2001\", \"source\": \"webhook\", \"timestamp\": \"2026-08-20T11:03:02+00:00\"}, {\"event_type\": \"payment_captured\", \"record_id\": \"GE-2002\", \"source\": \"gateway\", \"timestamp\": \"2026-08-20T11:03:08+00:00\"}, {\"event_type\": \"payment.captured\", \"http_status\": 200, \"processing_status\": \"processed\", \"record_id\": \"WH-2002\", \"source\": \"webhook\", \"timestamp\": \"2026-08-20T11:03:10+00:00\"}, {\"event_type\": \"settlement\", \"record_id\": \"SET-2001\", \"source\": \"settlement\", \"status\": \"settled\", \"timestamp\": \"2026-08-21T09:00:00+00:00\"}]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 19,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H3",
+        "content": "The confirmed USD 600.00 settlement against a single USD 300.00 invoice may already have been partially or fully remediated by a refund; inspect refund records before recommending any financial action.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 20,
+        "step_type": "tool_call",
+        "hypothesis_id": "H3",
+        "content": "Call get_refunds.",
+        "tool_call": {
+          "tool_name": "get_refunds",
+          "arguments": {
+            "payment_id": "PI-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 21,
+        "step_type": "observation",
+        "hypothesis_id": "H3",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 22,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H4",
+        "content": "The second gateway capture was a distinct upstream charge that was independently propagated through webhook processing, rather than a duplicate webhook delivery creating only a downstream appearance of double charging. Inspect detailed webhook records to test event identity and gateway-event mapping.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 23,
+        "step_type": "tool_call",
+        "hypothesis_id": "H4",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 24,
+        "step_type": "observation",
+        "hypothesis_id": "H4",
+        "content": "[{\"case_id\": \"PAY-002\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-2001\", \"http_status\": 200, \"occurred_at\": \"2026-08-20T11:03:02Z\", \"payment_id\": \"PI-1002\", \"processing_status\": \"processed\", \"webhook_id\": \"WH-2001\"}, {\"case_id\": \"PAY-002\", \"event_type\": \"payment.captured\", \"gateway_event_id\": \"GE-2002\", \"http_status\": 200, \"occurred_at\": \"2026-08-20T11:03:10Z\", \"payment_id\": \"PI-1002\", \"processing_status\": \"processed\", \"webhook_id\": \"WH-2002\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "WH-2001",
+          "WH-2002"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 25,
+        "step_type": "decision",
+        "hypothesis_id": "H4",
+        "content": "GE-2001 and GE-2002 are distinct USD 300.00 gateway capture events for PI-1002, and each maps to a separate processed webhook, WH-2001 and WH-2002. This supports two upstream captures rather than duplicate delivery of one webhook. The reason the second capture was initiated remains unresolved because no payment audit events were available.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "support"
+      },
+      {
+        "step_number": 26,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H5",
+        "content": "Invoice-level audit events may show whether the second gateway capture was initiated by a distinct internal request or retry, potentially establishing the cause of the first divergence despite the empty payment audit trail.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 27,
+        "step_type": "tool_call",
+        "hypothesis_id": "H5",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1002"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 28,
+        "step_type": "observation",
+        "hypothesis_id": "H5",
+        "content": "[{\"audit_id\": \"AUD-2001\", \"case_id\": \"PAY-002\", \"entity_id\": \"INV-1002\", \"entity_type\": \"invoice\", \"event_type\": \"payment_application\", \"occurred_at\": \"2026-08-20T11:03:03Z\", \"reason\": \"invoice_marked_paid_after_first_capture\", \"result\": \"processed\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-2001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 29,
+        "step_type": "final",
+        "hypothesis_id": null,
+        "content": "The duplicate financial outcome and first divergence are established, but the available records cannot distinguish among plausible causes for initiation of the second capture.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "abstain"
+      }
+    ],
+    "completed": true,
+    "abstained": true
+  }
+}
