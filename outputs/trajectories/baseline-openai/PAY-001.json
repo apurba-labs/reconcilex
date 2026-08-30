@@ -1,0 +1,416 @@
+{
+  "mode": "baseline",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-001",
+  "result": {
+    "case_id": "PAY-001",
+    "reported_issue": "Customer reports a successful payment, but invoice INV-1001 remains unpaid.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "H1",
+        "description": "Payment PI-1001 was captured, but the captured-payment webhook failed before the invoice could be updated.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-1002",
+            "claim": "The gateway recorded capture of the full invoice amount for INV-1001.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1001"
+              },
+              {
+                "field": "invoice_reference",
+                "operator": "eq",
+                "value": "INV-1001"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "500.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          },
+          {
+            "source": "webhook_event",
+            "record_id": "WH-1001",
+            "claim": "Processing of the captured-payment webhook failed with HTTP 500.",
+            "assertions": [
+              {
+                "field": "gateway_event_id",
+                "operator": "eq",
+                "value": "GE-1002"
+              },
+              {
+                "field": "processing_status",
+                "operator": "eq",
+                "value": "failed"
+              },
+              {
+                "field": "http_status",
+                "operator": "eq",
+                "value": "500"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-1001",
+            "claim": "The invoice payment webhook operation failed because the upstream invoice service returned HTTP 500.",
+            "assertions": [
+              {
+                "field": "entity_id",
+                "operator": "eq",
+                "value": "INV-1001"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_webhook_processing"
+              },
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "failed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "upstream_invoice_service_http_500"
+              }
+            ]
+          },
+          {
+            "source": "invoice",
+            "record_id": "INV-1001",
+            "claim": "The invoice remained unpaid after the capture and webhook failure.",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "unpaid"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "500.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      },
+      {
+        "hypothesis_id": "H2",
+        "description": "Payment PI-1001 was not successfully captured by the gateway.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-1002",
+            "claim": "The gateway explicitly recorded payment capture.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1001"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "500.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "hypothesis_id": "H3",
+        "description": "The payment lifecycle, including settlement, completed successfully.",
+        "status": "rejected",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-1002",
+            "claim": "The payment was captured at the gateway.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": [
+          {
+            "source": "settlement",
+            "record_id": "SET-1001",
+            "claim": "Settlement was still pending and had no settlement timestamp.",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "pending"
+              },
+              {
+                "field": "settled_at",
+                "operator": "eq",
+                "value": "null"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "finding": "Payment PI-1001 was captured for USD 500.00 against INV-1001, but the invoice remains unpaid because processing of the capture webhook failed.",
+    "root_cause": "The captured-payment webhook could not update INV-1001 because the upstream invoice service returned HTTP 500.",
+    "first_divergence": "At 2026-08-20T10:03:05Z, webhook WH-1001 for captured gateway event GE-1002 failed with HTTP 500; audit event AUD-1001 recorded the invoice-service failure one second later.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-1002",
+        "claim": "PI-1001 was captured for the amount and currency of INV-1001.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1001"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1001"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "500.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-1001",
+        "claim": "The capture webhook failed during processing.",
+        "assertions": [
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "500"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-1001",
+        "claim": "The recorded failure reason was an HTTP 500 from the upstream invoice service.",
+        "assertions": [
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "upstream_invoice_service_http_500"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1001",
+        "claim": "The invoice is recorded as unpaid.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [
+      {
+        "source": "settlement",
+        "record_id": "SET-1001",
+        "claim": "The settlement record remains pending rather than settled, so end-to-end fund settlement is not established.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "pending"
+          },
+          {
+            "field": "settled_at",
+            "operator": "eq",
+            "value": "null"
+          }
+        ]
+      }
+    ],
+    "confidence": 0.99,
+    "recommended_action": "Have an authorized operator verify idempotency and current gateway status, then replay or reprocess WH-1001 to apply PI-1001 to INV-1001 without creating a second charge. Separately review the still-pending settlement SET-1001 before treating funds as settled. Any manual invoice-status change or other financial adjustment requires human approval.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-001",
+        "invoice_ids": [
+          "INV-1001"
+        ],
+        "payment_ids": [
+          "PI-1001"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1001",
+          "case_id": "PAY-001",
+          "customer_id": "CUS-001",
+          "amount": "500.00",
+          "currency": "USD",
+          "status": "unpaid",
+          "created_at": "2026-08-20T10:00:00Z",
+          "updated_at": "2026-08-20T10:05:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-1001",
+          "case_id": "PAY-001",
+          "payment_id": "PI-1001",
+          "invoice_reference": "INV-1001",
+          "event_type": "payment_authorized",
+          "amount": "500.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-20T10:02:00Z"
+        },
+        {
+          "event_id": "GE-1002",
+          "case_id": "PAY-001",
+          "payment_id": "PI-1001",
+          "invoice_reference": "INV-1001",
+          "event_type": "payment_captured",
+          "amount": "500.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-20T10:03:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-1001",
+          "case_id": "PAY-001",
+          "gateway_event_id": "GE-1002",
+          "payment_id": "PI-1001",
+          "event_type": "payment.captured",
+          "http_status": 500,
+          "processing_status": "failed",
+          "occurred_at": "2026-08-20T10:03:05Z"
+        }
+      ],
+      "settlements": [
+        {
+          "settlement_id": "SET-1001",
+          "case_id": "PAY-001",
+          "payment_id": "PI-1001",
+          "gross_amount": "500.00",
+          "net_amount": "485.00",
+          "currency": "USD",
+          "status": "pending",
+          "expected_by": "2026-08-22T23:59:59Z",
+          "settled_at": null
+        }
+      ],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-1001",
+          "case_id": "PAY-001",
+          "entity_type": "invoice",
+          "entity_id": "INV-1001",
+          "event_type": "payment_webhook_processing",
+          "result": "failed",
+          "reason": "upstream_invoice_service_http_500",
+          "occurred_at": "2026-08-20T10:03:06Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_authorized",
+          "timestamp": "2026-08-20T10:02:00+00:00",
+          "record_id": "GE-1001"
+        },
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-20T10:03:00+00:00",
+          "record_id": "GE-1002"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-20T10:03:05+00:00",
+          "record_id": "WH-1001",
+          "processing_status": "failed",
+          "http_status": 500
+        }
+      ]
+    }
+  }
+}

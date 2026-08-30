@@ -1,0 +1,455 @@
+{
+  "mode": "baseline",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-008",
+  "result": {
+    "case_id": "PAY-008",
+    "reported_issue": "Gateway shows a successful payment while the invoice remains unpaid.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "H1",
+        "description": "The payment was captured in USD but could not be applied to the EUR invoice because of a currency mismatch.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "invoice",
+            "record_id": "INV-1008",
+            "claim": "The invoice is denominated in EUR and remains unpaid.",
+            "assertions": [
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "EUR"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "unpaid"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "1200.00"
+              }
+            ]
+          },
+          {
+            "source": "gateway_event",
+            "record_id": "GE-8001",
+            "claim": "The referenced payment was captured for the same nominal amount in USD.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "invoice_reference",
+                "operator": "eq",
+                "value": "INV-1008"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "1200.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-8002",
+            "claim": "Application of the payment to the invoice failed explicitly because the invoice was EUR and the payment was USD.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_application"
+              },
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "failed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "currency_mismatch_invoice_EUR_payment_USD"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      },
+      {
+        "hypothesis_id": "H2",
+        "description": "The invoice remained unpaid because the capture webhook was not successfully received or processed.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "webhook_event",
+            "record_id": "WH-8001",
+            "claim": "The capture webhook returned HTTP 200 and was processed.",
+            "assertions": [
+              {
+                "field": "http_status",
+                "operator": "eq",
+                "value": "200"
+              },
+              {
+                "field": "processing_status",
+                "operator": "eq",
+                "value": "processed"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment.captured"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-8001",
+            "claim": "The payment receipt was processed successfully before invoice application failed.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_received"
+              },
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "processed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "gateway_capture_received_successfully"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "hypothesis_id": "H3",
+        "description": "The gateway payment did not settle, leaving no completed payment to apply.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "settlement",
+            "record_id": "SET-8001",
+            "claim": "The USD payment settlement completed.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1008"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "settled"
+              },
+              {
+                "field": "gross_amount",
+                "operator": "eq",
+                "value": "1200.00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "finding": "Payment PI-1008 was successfully captured and settled in USD, but invoice INV-1008 remains unpaid because it is denominated in EUR and the payment application failed.",
+    "root_cause": "Currency mismatch: invoice INV-1008 is in EUR, while payment PI-1008 was captured and settled in USD. Audit event AUD-8002 records the resulting payment-application failure.",
+    "first_divergence": "At 2026-08-23T14:03:06Z, invoice payment application failed in AUD-8002 due to currency_mismatch_invoice_EUR_payment_USD, after the capture webhook and payment receipt had been processed successfully.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-8001",
+        "claim": "Payment PI-1008 was captured in USD and referenced INV-1008.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1008"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1008"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "1200.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-8001",
+        "claim": "The capture notification was successfully processed.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-8001"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "200"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-8001",
+        "claim": "The system successfully processed receipt of the gateway capture.",
+        "assertions": [
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "PI-1008"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "processed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "gateway_capture_received_successfully"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-8002",
+        "claim": "The first failed lifecycle step was payment application to the invoice because of the currency mismatch.",
+        "assertions": [
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "INV-1008"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_application"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "currency_mismatch_invoice_EUR_payment_USD"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-8001",
+        "claim": "The payment subsequently settled in USD.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1008"
+          },
+          {
+            "field": "gross_amount",
+            "operator": "eq",
+            "value": "1200.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "settled"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1008",
+        "claim": "The EUR invoice remains unpaid.",
+        "assertions": [
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "1200.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "EUR"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.99,
+    "recommended_action": "Route to human payment-operations review to determine the correct disposition of the settled USD funds and the valid way to resolve the EUR invoice. Do not automatically mark the invoice paid, convert or reallocate the payment, issue a refund, or initiate another charge. Any financial correction requires human approval.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-008",
+        "invoice_ids": [
+          "INV-1008"
+        ],
+        "payment_ids": [
+          "PI-1008"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1008",
+          "case_id": "PAY-008",
+          "customer_id": "CUS-008",
+          "amount": "1200.00",
+          "currency": "EUR",
+          "status": "unpaid",
+          "created_at": "2026-08-23T14:00:00Z",
+          "updated_at": "2026-08-23T14:06:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-8001",
+          "case_id": "PAY-008",
+          "payment_id": "PI-1008",
+          "invoice_reference": "INV-1008",
+          "event_type": "payment_captured",
+          "amount": "1200.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-23T14:03:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-8001",
+          "case_id": "PAY-008",
+          "gateway_event_id": "GE-8001",
+          "payment_id": "PI-1008",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-23T14:03:04Z"
+        }
+      ],
+      "settlements": [
+        {
+          "settlement_id": "SET-8001",
+          "case_id": "PAY-008",
+          "payment_id": "PI-1008",
+          "gross_amount": "1200.00",
+          "net_amount": "1164.00",
+          "currency": "USD",
+          "status": "settled",
+          "expected_by": "2026-08-25T23:59:59Z",
+          "settled_at": "2026-08-24T09:00:00Z"
+        }
+      ],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-8001",
+          "case_id": "PAY-008",
+          "entity_type": "payment",
+          "entity_id": "PI-1008",
+          "event_type": "payment_received",
+          "result": "processed",
+          "reason": "gateway_capture_received_successfully",
+          "occurred_at": "2026-08-23T14:03:05Z"
+        },
+        {
+          "audit_id": "AUD-8002",
+          "case_id": "PAY-008",
+          "entity_type": "invoice",
+          "entity_id": "INV-1008",
+          "event_type": "payment_application",
+          "result": "failed",
+          "reason": "currency_mismatch_invoice_EUR_payment_USD",
+          "occurred_at": "2026-08-23T14:03:06Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-23T14:03:00+00:00",
+          "record_id": "GE-8001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-23T14:03:04+00:00",
+          "record_id": "WH-8001",
+          "processing_status": "processed",
+          "http_status": 200
+        },
+        {
+          "source": "settlement",
+          "event_type": "settlement",
+          "timestamp": "2026-08-24T09:00:00+00:00",
+          "record_id": "SET-8001",
+          "status": "settled"
+        }
+      ]
+    }
+  }
+}

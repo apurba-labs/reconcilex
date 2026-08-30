@@ -1,0 +1,165 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-006",
+  "result": {
+    "case_id": "PAY-006",
+    "reported_issue": "Customer believes payment succeeded, but the invoice remains unpaid.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "description": "The payment was authorized but expired because capture was never initiated.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-6001",
+            "claim": "Payment of 275.00 USD was authorized on 2026-08-21T10:05:00Z.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_authorized"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "275.00"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-6001",
+            "claim": "The authorization expired before capture on 2026-08-24T10:05:00Z.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "authorization_expired"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "authorization_expired_before_capture"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The payment was authorized but never captured, and the authorization subsequently expired.",
+    "root_cause": "The system failed to capture the authorized payment within the required window, resulting in an expired authorization.",
+    "first_divergence": "The authorization expired on 2026-08-24T10:05:00Z without any capture attempt being recorded.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-6001",
+        "claim": "Payment of 275.00 USD was authorized on 2026-08-21T10:05:00Z.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_authorized"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "275.00"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-6001",
+        "claim": "The authorization expired before capture on 2026-08-24T10:05:00Z.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "authorization_expired"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "authorization_expired_before_capture"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 1.0,
+    "recommended_action": "Advise the customer that the payment authorization expired before capture, and request them to submit a new payment.",
+    "requires_human_approval": false,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-006",
+        "invoice_ids": [
+          "INV-1006"
+        ],
+        "payment_ids": [
+          "PI-1006"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1006",
+          "case_id": "PAY-006",
+          "customer_id": "CUS-006",
+          "amount": "275.00",
+          "currency": "USD",
+          "status": "unpaid",
+          "created_at": "2026-08-21T10:00:00Z",
+          "updated_at": "2026-08-24T10:00:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-6001",
+          "case_id": "PAY-006",
+          "payment_id": "PI-1006",
+          "invoice_reference": "INV-1006",
+          "event_type": "payment_authorized",
+          "amount": "275.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-21T10:05:00Z"
+        }
+      ],
+      "webhook_events": [],
+      "settlements": [],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-6001",
+          "case_id": "PAY-006",
+          "entity_type": "payment",
+          "entity_id": "PI-1006",
+          "event_type": "authorization_expired",
+          "result": "failed",
+          "reason": "authorization_expired_before_capture",
+          "occurred_at": "2026-08-24T10:05:00Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_authorized",
+          "timestamp": "2026-08-21T10:05:00+00:00",
+          "record_id": "GE-6001"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-005",
+  "result": {
+    "case_id": "PAY-005",
+    "reported_issue": "A settled payment later received a chargeback but the invoice still appears normally paid.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "description": "The invoice status was not updated to reflect the chargeback due to a failed state synchronization.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-5002",
+            "claim": "A chargeback was created for payment PI-1005 on 2026-08-25T13:00:00Z.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "chargeback_created"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-5001",
+            "claim": "The chargeback state sync failed with reason invoice_status_not_adjusted_after_chargeback.",
+            "assertions": [
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "failed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "invoice_status_not_adjusted_after_chargeback"
+              }
+            ]
+          },
+          {
+            "source": "invoice",
+            "record_id": "INV-1005",
+            "claim": "The invoice status remains 'paid' despite the chargeback.",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "paid"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The invoice status was not updated to reflect the chargeback because the chargeback state synchronization failed.",
+    "root_cause": "The chargeback state synchronization process failed (AUD-5001), leaving the invoice in a 'paid' state after a chargeback was initiated.",
+    "first_divergence": "AUD-5001",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-5002",
+        "claim": "A chargeback was created for payment PI-1005.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "chargeback_created"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-5001",
+        "claim": "The chargeback state sync failed.",
+        "assertions": [
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.95,
+    "recommended_action": "Manually update the status of invoice INV-1005 to reflect the chargeback and investigate the failure in the chargeback state synchronization service.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-005",
+        "invoice_ids": [
+          "INV-1005"
+        ],
+        "payment_ids": [
+          "PI-1005"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1005",
+          "case_id": "PAY-005",
+          "customer_id": "CUS-005",
+          "amount": "1000.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-10T08:00:00Z",
+          "updated_at": "2026-08-10T08:10:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-5001",
+          "case_id": "PAY-005",
+          "payment_id": "PI-1005",
+          "invoice_reference": "INV-1005",
+          "event_type": "payment_captured",
+          "amount": "1000.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-10T08:05:00Z"
+        },
+        {
+          "event_id": "GE-5002",
+          "case_id": "PAY-005",
+          "payment_id": "PI-1005",
+          "invoice_reference": "INV-1005",
+          "event_type": "chargeback_created",
+          "amount": "1000.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-25T13:00:00Z"
+        }
+      ],
+      "webhook_events": [],
+      "settlements": [
+        {
+          "settlement_id": "SET-5001",
+          "case_id": "PAY-005",
+          "payment_id": "PI-1005",
+          "gross_amount": "1000.00",
+          "net_amount": "970.00",
+          "currency": "USD",
+          "status": "settled",
+          "expected_by": "2026-08-12T23:59:59Z",
+          "settled_at": "2026-08-11T09:00:00Z"
+        }
+      ],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-5001",
+          "case_id": "PAY-005",
+          "entity_type": "invoice",
+          "entity_id": "INV-1005",
+          "event_type": "chargeback_state_sync",
+          "result": "failed",
+          "reason": "invoice_status_not_adjusted_after_chargeback",
+          "occurred_at": "2026-08-25T13:00:05Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-10T08:05:00+00:00",
+          "record_id": "GE-5001"
+        },
+        {
+          "source": "settlement",
+          "event_type": "settlement",
+          "timestamp": "2026-08-11T09:00:00+00:00",
+          "record_id": "SET-5001",
+          "status": "settled"
+        },
+        {
+          "source": "gateway",
+          "event_type": "chargeback_created",
+          "timestamp": "2026-08-25T13:00:00+00:00",
+          "record_id": "GE-5002"
+        }
+      ]
+    }
+  }
+}

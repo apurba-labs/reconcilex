@@ -1,0 +1,77 @@
+{
+  "provider": "openai",
+  "baseline_evaluation": "outputs/evaluations/baseline-openai.json",
+  "advanced_evaluation": "outputs/evaluations/openai-final-v1.json",
+  "total_cases": 12,
+  "strict_passes": {
+    "baseline": 0,
+    "advanced": 2,
+    "delta": 2
+  },
+  "metrics": [
+    {
+      "metric": "root_cause_accuracy",
+      "label": "Root cause accuracy",
+      "baseline": 0.25,
+      "advanced": 0.5,
+      "delta": 0.25,
+      "higher_is_better": true,
+      "improved": true
+    },
+    {
+      "metric": "first_divergence_accuracy",
+      "label": "First divergence accuracy",
+      "baseline": 0.3333333333333333,
+      "advanced": 0.4166666666666667,
+      "delta": 0.08333333333333337,
+      "higher_is_better": true,
+      "improved": true
+    },
+    {
+      "metric": "abstention_accuracy",
+      "label": "Abstention accuracy",
+      "baseline": 0.8333333333333334,
+      "advanced": 0.5833333333333334,
+      "delta": -0.25,
+      "higher_is_better": true,
+      "improved": false
+    },
+    {
+      "metric": "safe_action_compliance",
+      "label": "Safe action compliance",
+      "baseline": 0.9166666666666666,
+      "advanced": 0.9166666666666666,
+      "delta": 0.0,
+      "higher_is_better": true,
+      "improved": false
+    },
+    {
+      "metric": "average_evidence_coverage",
+      "label": "Evidence coverage",
+      "baseline": 0.425,
+      "advanced": 0.7125,
+      "delta": 0.28750000000000003,
+      "higher_is_better": true,
+      "improved": true
+    },
+    {
+      "metric": "unsupported_claim_rate",
+      "label": "Unsupported claim rate",
+      "baseline": 0.0,
+      "advanced": 0.0,
+      "delta": 0.0,
+      "higher_is_better": false,
+      "improved": false
+    }
+  ],
+  "efficiency": {
+    "average_tool_calls": {
+      "baseline": 0.0,
+      "advanced": 6.916666666666667
+    },
+    "average_reasoning_steps": {
+      "baseline": 1.0,
+      "advanced": 22.5
+    }
+  }
+}

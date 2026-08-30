@@ -1,0 +1,520 @@
+{
+  "mode": "baseline",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-002",
+  "result": {
+    "case_id": "PAY-002",
+    "reported_issue": "Customer reports being charged twice for a single invoice.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "H1",
+        "description": "The same USD 300.00 payment was captured twice for invoice INV-1002.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-2001",
+            "claim": "First USD 300.00 capture for PI-1002 and INV-1002.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "300.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          },
+          {
+            "source": "gateway_event",
+            "record_id": "GE-2002",
+            "claim": "Second USD 300.00 capture for the same payment and invoice eight seconds later.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1002"
+              },
+              {
+                "field": "invoice_reference",
+                "operator": "eq",
+                "value": "INV-1002"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "300.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          },
+          {
+            "source": "settlement",
+            "record_id": "SET-2001",
+            "claim": "The settled gross amount equals both USD 300.00 captures combined.",
+            "assertions": [
+              {
+                "field": "gross_amount",
+                "operator": "eq",
+                "value": "600.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "settled"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": [
+          {
+            "source": "invoice",
+            "record_id": "INV-1002",
+            "claim": "The invoice records only USD 300.00 and is marked paid, rather than recording a USD 600.00 obligation.",
+            "assertions": [
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "300.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "paid"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "hypothesis_id": "H2",
+        "description": "Duplicate webhook delivery created the second charge.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-2002",
+            "claim": "A distinct second gateway capture already existed before its associated webhook was processed.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "occurred_at",
+                "operator": "eq",
+                "value": "2026-08-20T11:03:08Z"
+              }
+            ]
+          },
+          {
+            "source": "webhook_event",
+            "record_id": "WH-2002",
+            "claim": "The second webhook references the second gateway event and occurred afterward.",
+            "assertions": [
+              {
+                "field": "gateway_event_id",
+                "operator": "eq",
+                "value": "GE-2002"
+              },
+              {
+                "field": "occurred_at",
+                "operator": "eq",
+                "value": "2026-08-20T11:03:10Z"
+              },
+              {
+                "field": "processing_status",
+                "operator": "eq",
+                "value": "processed"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "hypothesis_id": "H3",
+        "description": "A retry, idempotency failure, or other initiating mechanism caused the second gateway capture.",
+        "status": "inconclusive",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-2002",
+            "claim": "A second capture for the same payment and invoice occurred eight seconds after the first.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1002"
+              },
+              {
+                "field": "invoice_reference",
+                "operator": "eq",
+                "value": "INV-1002"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The duplicate-charge report is substantiated: two USD 300.00 captures were recorded for the same payment and invoice, and USD 600.00 gross was settled.",
+    "root_cause": "The financial duplication was caused by a second gateway capture for PI-1002 against INV-1002. The supplied records do not establish what initiated that second capture.",
+    "first_divergence": "The first lifecycle divergence was gateway event GE-2002 at 2026-08-20T11:03:08Z, which captured another USD 300.00 after the first capture and after audit event AUD-2001 recorded the invoice as paid following the first capture.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-2001",
+        "claim": "Initial capture of the invoice amount.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1002"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1002"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "300.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-2001",
+        "claim": "The invoice was marked paid after the first capture and before the second capture.",
+        "assertions": [
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "INV-1002"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "processed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "invoice_marked_paid_after_first_capture"
+          },
+          {
+            "field": "occurred_at",
+            "operator": "eq",
+            "value": "2026-08-20T11:03:03Z"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-2002",
+        "claim": "A second capture of the same amount was recorded for the same payment and invoice.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1002"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1002"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "300.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "occurred_at",
+            "operator": "eq",
+            "value": "2026-08-20T11:03:08Z"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-2002",
+        "claim": "The webhook associated with the second gateway capture was successfully processed.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-2002"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "200"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-2001",
+        "claim": "Both captures were financially realized in the USD 600.00 gross settlement.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1002"
+          },
+          {
+            "field": "gross_amount",
+            "operator": "eq",
+            "value": "600.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "settled"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1002",
+        "claim": "The invoice itself reflects a single USD 300.00 amount and paid status, not a USD 600.00 balance.",
+        "assertions": [
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "300.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-2001",
+        "claim": "The supplied audit trail records invoice application after the first capture only.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_application"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "invoice_marked_paid_after_first_capture"
+          }
+        ]
+      }
+    ],
+    "confidence": 0.99,
+    "recommended_action": "Route for human approval to refund or reverse one USD 300.00 capture, after confirming the appropriate gateway transaction and checking for any external refund activity not represented in the supplied records. Preserve the valid capture supporting INV-1002, reconcile the refund against SET-2001, and have engineering review capture-request and idempotency logs to determine why GE-2002 was created.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-002",
+        "invoice_ids": [
+          "INV-1002"
+        ],
+        "payment_ids": [
+          "PI-1002"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1002",
+          "case_id": "PAY-002",
+          "customer_id": "CUS-002",
+          "amount": "300.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-20T11:00:00Z",
+          "updated_at": "2026-08-20T11:07:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-2001",
+          "case_id": "PAY-002",
+          "payment_id": "PI-1002",
+          "invoice_reference": "INV-1002",
+          "event_type": "payment_captured",
+          "amount": "300.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-20T11:03:00Z"
+        },
+        {
+          "event_id": "GE-2002",
+          "case_id": "PAY-002",
+          "payment_id": "PI-1002",
+          "invoice_reference": "INV-1002",
+          "event_type": "payment_captured",
+          "amount": "300.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-20T11:03:08Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-2001",
+          "case_id": "PAY-002",
+          "gateway_event_id": "GE-2001",
+          "payment_id": "PI-1002",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-20T11:03:02Z"
+        },
+        {
+          "webhook_id": "WH-2002",
+          "case_id": "PAY-002",
+          "gateway_event_id": "GE-2002",
+          "payment_id": "PI-1002",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-20T11:03:10Z"
+        }
+      ],
+      "settlements": [
+        {
+          "settlement_id": "SET-2001",
+          "case_id": "PAY-002",
+          "payment_id": "PI-1002",
+          "gross_amount": "600.00",
+          "net_amount": "582.00",
+          "currency": "USD",
+          "status": "settled",
+          "expected_by": "2026-08-22T23:59:59Z",
+          "settled_at": "2026-08-21T09:00:00Z"
+        }
+      ],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-2001",
+          "case_id": "PAY-002",
+          "entity_type": "invoice",
+          "entity_id": "INV-1002",
+          "event_type": "payment_application",
+          "result": "processed",
+          "reason": "invoice_marked_paid_after_first_capture",
+          "occurred_at": "2026-08-20T11:03:03Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-20T11:03:00+00:00",
+          "record_id": "GE-2001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-20T11:03:02+00:00",
+          "record_id": "WH-2001",
+          "processing_status": "processed",
+          "http_status": 200
+        },
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-20T11:03:08+00:00",
+          "record_id": "GE-2002"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-20T11:03:10+00:00",
+          "record_id": "WH-2002",
+          "processing_status": "processed",
+          "http_status": 200
+        },
+        {
+          "source": "settlement",
+          "event_type": "settlement",
+          "timestamp": "2026-08-21T09:00:00+00:00",
+          "record_id": "SET-2001",
+          "status": "settled"
+        }
+      ]
+    }
+  }
+}

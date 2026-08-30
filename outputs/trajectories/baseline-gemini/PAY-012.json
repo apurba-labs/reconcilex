@@ -1,0 +1,212 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-012",
+  "result": {
+    "case_id": "PAY-012",
+    "reported_issue": "Systems disagree about whether the payment was processed successfully.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-01",
+        "description": "The webhook notification failed to process, preventing the invoice status from being updated to paid.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "webhook_event",
+            "record_id": "WH-12001",
+            "claim": "Webhook failed with HTTP 500",
+            "assertions": [
+              {
+                "field": "http_status",
+                "operator": "eq",
+                "value": "500"
+              },
+              {
+                "field": "processing_status",
+                "operator": "eq",
+                "value": "failed"
+              }
+            ]
+          },
+          {
+            "source": "invoice",
+            "record_id": "INV-1012",
+            "claim": "Invoice remains unpaid",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "unpaid"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      },
+      {
+        "hypothesis_id": "HYP-02",
+        "description": "The gateway event contains an incorrect invoice reference (INV-9912 instead of INV-1012).",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-12001",
+            "claim": "Gateway event references INV-9912",
+            "assertions": [
+              {
+                "field": "invoice_reference",
+                "operator": "eq",
+                "value": "INV-9912"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The payment was successfully captured by the gateway, but the internal invoice remains unpaid because the webhook notification failed to process (HTTP 500) and there is an invoice reference mismatch in the gateway event.",
+    "root_cause": "Webhook delivery/processing failure (HTTP 500) prevented the system from updating the invoice status to paid, compounded by an incorrect invoice reference (INV-9912) in the gateway event.",
+    "first_divergence": "WH-12001",
+    "evidence": [
+      {
+        "source": "webhook_event",
+        "record_id": "WH-12001",
+        "claim": "The webhook notification for the payment capture failed with HTTP status 500.",
+        "assertions": [
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "500"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "failed"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-12001",
+        "claim": "The gateway successfully captured the payment of 690.00 USD but referenced INV-9912.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-9912"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1012",
+        "claim": "The invoice remains in unpaid status.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.95,
+    "recommended_action": "Manually update the status of invoice INV-1012 to paid after verifying the invoice reference mismatch, and retry the webhook WH-12001 if possible.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-012",
+        "invoice_ids": [
+          "INV-1012"
+        ],
+        "payment_ids": [
+          "PI-1012"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1012",
+          "case_id": "PAY-012",
+          "customer_id": "CUS-012",
+          "amount": "690.00",
+          "currency": "USD",
+          "status": "unpaid",
+          "created_at": "2026-08-23T15:00:00Z",
+          "updated_at": "2026-08-23T15:10:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-12001",
+          "case_id": "PAY-012",
+          "payment_id": "PI-1012",
+          "invoice_reference": "INV-9912",
+          "event_type": "payment_captured",
+          "amount": "690.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-23T15:05:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-12001",
+          "case_id": "PAY-012",
+          "gateway_event_id": "GE-12001",
+          "payment_id": "PI-1012",
+          "event_type": "payment.captured",
+          "http_status": 500,
+          "processing_status": "failed",
+          "occurred_at": "2026-08-23T15:05:04Z"
+        }
+      ],
+      "settlements": [
+        {
+          "settlement_id": "SET-12001",
+          "case_id": "PAY-012",
+          "payment_id": "PI-1012",
+          "gross_amount": "690.00",
+          "net_amount": "669.30",
+          "currency": "USD",
+          "status": "pending",
+          "expected_by": "2026-08-26T23:59:59Z",
+          "settled_at": null
+        }
+      ],
+      "refunds": [],
+      "audit_events": [],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-23T15:05:00+00:00",
+          "record_id": "GE-12001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-23T15:05:04+00:00",
+          "record_id": "WH-12001",
+          "processing_status": "failed",
+          "http_status": 500
+        }
+      ]
+    }
+  }
+}

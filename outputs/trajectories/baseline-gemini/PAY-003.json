@@ -1,0 +1,223 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-003",
+  "result": {
+    "case_id": "PAY-003",
+    "reported_issue": "Customer received a full refund, but the invoice still appears paid.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "description": "The refund succeeded but the invoice status update failed to apply due to a state sync failure.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "refund",
+            "record_id": "REF-3001",
+            "claim": "Refund REF-3001 succeeded for payment PI-1003",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "succeeded"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-3001",
+            "claim": "State sync failed for invoice INV-1003",
+            "assertions": [
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "failed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "invoice_status_update_not_applied"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The refund succeeded but the invoice status was not updated to 'refunded' due to a failed state sync.",
+    "root_cause": "The refund state sync process failed to update the invoice status (AUD-3001).",
+    "first_divergence": "AUD-3001",
+    "evidence": [
+      {
+        "source": "refund",
+        "record_id": "REF-3001",
+        "claim": "Refund REF-3001 succeeded for payment PI-1003",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "succeeded"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-3001",
+        "claim": "State sync failed for invoice INV-1003",
+        "assertions": [
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "invoice_status_update_not_applied"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1003",
+        "claim": "Invoice INV-1003 status remains paid",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 1.0,
+    "recommended_action": "Manually update the invoice status for INV-1003 to 'refunded' and retry the state sync.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-003",
+        "invoice_ids": [
+          "INV-1003"
+        ],
+        "payment_ids": [
+          "PI-1003"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1003",
+          "case_id": "PAY-003",
+          "customer_id": "CUS-003",
+          "amount": "450.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-18T09:00:00Z",
+          "updated_at": "2026-08-18T09:10:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-3001",
+          "case_id": "PAY-003",
+          "payment_id": "PI-1003",
+          "invoice_reference": "INV-1003",
+          "event_type": "payment_captured",
+          "amount": "450.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-18T09:05:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-3001",
+          "case_id": "PAY-003",
+          "gateway_event_id": "GE-3001",
+          "payment_id": "PI-1003",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-18T09:05:03Z"
+        }
+      ],
+      "settlements": [
+        {
+          "settlement_id": "SET-3001",
+          "case_id": "PAY-003",
+          "payment_id": "PI-1003",
+          "gross_amount": "450.00",
+          "net_amount": "436.50",
+          "currency": "USD",
+          "status": "settled",
+          "expected_by": "2026-08-20T23:59:59Z",
+          "settled_at": "2026-08-19T08:00:00Z"
+        }
+      ],
+      "refunds": [
+        {
+          "refund_id": "REF-3001",
+          "case_id": "PAY-003",
+          "payment_id": "PI-1003",
+          "invoice_id": "INV-1003",
+          "amount": "450.00",
+          "currency": "USD",
+          "status": "succeeded",
+          "created_at": "2026-08-22T14:00:00Z"
+        }
+      ],
+      "audit_events": [
+        {
+          "audit_id": "AUD-3001",
+          "case_id": "PAY-003",
+          "entity_type": "invoice",
+          "entity_id": "INV-1003",
+          "event_type": "refund_state_sync",
+          "result": "failed",
+          "reason": "invoice_status_update_not_applied",
+          "occurred_at": "2026-08-22T14:00:05Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-18T09:05:00+00:00",
+          "record_id": "GE-3001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-18T09:05:03+00:00",
+          "record_id": "WH-3001",
+          "processing_status": "processed",
+          "http_status": 200
+        },
+        {
+          "source": "settlement",
+          "event_type": "settlement",
+          "timestamp": "2026-08-19T08:00:00+00:00",
+          "record_id": "SET-3001",
+          "status": "settled"
+        },
+        {
+          "source": "refund",
+          "event_type": "refund",
+          "timestamp": "2026-08-22T14:00:00+00:00",
+          "record_id": "REF-3001",
+          "status": "succeeded"
+        }
+      ]
+    }
+  }
+}

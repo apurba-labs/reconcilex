@@ -1,0 +1,201 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-011",
+  "result": {
+    "case_id": "PAY-011",
+    "reported_issue": "A recent captured payment is not yet visible in settlement.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-01",
+        "description": "The settlement is delayed beyond the expected window.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "settlement",
+            "record_id": "SET-11001",
+            "claim": "The settlement is expected by 2026-08-27T23:59:59Z, which is after the observation time of 2026-08-25T12:00:00Z.",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "pending"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "hypothesis_id": "HYP-02",
+        "description": "The settlement is pending but still within the expected processing window.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "settlement",
+            "record_id": "SET-11001",
+            "claim": "The settlement status is pending with an expected date of 2026-08-27T23:59:59Z.",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "pending"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-11001",
+            "claim": "Audit log confirms settlement is still within the expected window.",
+            "assertions": [
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "pending"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "settlement_still_within_expected_window"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The payment has been successfully captured and the settlement record exists in a pending state. The settlement is not yet overdue as the expected settlement date is 2026-08-27T23:59:59Z, which is after the observation time of 2026-08-25T12:00:00Z.",
+    "root_cause": "The settlement is still within its standard processing window and is not yet due.",
+    "first_divergence": null,
+    "evidence": [
+      {
+        "source": "settlement",
+        "record_id": "SET-11001",
+        "claim": "The settlement is pending with an expected completion date of 2026-08-27T23:59:59Z.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "pending"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-11001",
+        "claim": "Audit log confirms the settlement is still within the expected window.",
+        "assertions": [
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "pending"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 1.0,
+    "recommended_action": "No action required. Advise the merchant that the settlement is processing normally and is expected by 2026-08-27T23:59:59Z.",
+    "requires_human_approval": false,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-011",
+        "invoice_ids": [
+          "INV-1011"
+        ],
+        "payment_ids": [
+          "PI-1011"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1011",
+          "case_id": "PAY-011",
+          "customer_id": "CUS-011",
+          "amount": "410.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-24T08:00:00Z",
+          "updated_at": "2026-08-24T08:08:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-11001",
+          "case_id": "PAY-011",
+          "payment_id": "PI-1011",
+          "invoice_reference": "INV-1011",
+          "event_type": "payment_captured",
+          "amount": "410.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-24T08:04:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-11001",
+          "case_id": "PAY-011",
+          "gateway_event_id": "GE-11001",
+          "payment_id": "PI-1011",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-24T08:04:03Z"
+        }
+      ],
+      "settlements": [
+        {
+          "settlement_id": "SET-11001",
+          "case_id": "PAY-011",
+          "payment_id": "PI-1011",
+          "gross_amount": "410.00",
+          "net_amount": "397.70",
+          "currency": "USD",
+          "status": "pending",
+          "expected_by": "2026-08-27T23:59:59Z",
+          "settled_at": null
+        }
+      ],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-11001",
+          "case_id": "PAY-011",
+          "entity_type": "payment",
+          "entity_id": "PI-1011",
+          "event_type": "settlement_status_check",
+          "result": "pending",
+          "reason": "settlement_still_within_expected_window",
+          "occurred_at": "2026-08-25T11:00:00Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-24T08:04:00+00:00",
+          "record_id": "GE-11001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-24T08:04:03+00:00",
+          "record_id": "WH-11001",
+          "processing_status": "processed",
+          "http_status": 200
+        }
+      ]
+    }
+  }
+}

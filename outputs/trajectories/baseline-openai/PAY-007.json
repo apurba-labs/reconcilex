@@ -1,0 +1,323 @@
+{
+  "mode": "baseline",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-007",
+  "result": {
+    "case_id": "PAY-007",
+    "reported_issue": "A captured payment has not appeared in settlement.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "H1",
+        "description": "The captured payment is represented in settlement records but remains pending beyond its expected settlement window.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-7001",
+            "claim": "Payment PI-1007 was captured for 620.00 USD.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1007"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "620.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          },
+          {
+            "source": "settlement",
+            "record_id": "SET-7001",
+            "claim": "The settlement entry for PI-1007 remains pending and has no settlement timestamp.",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "pending"
+              },
+              {
+                "field": "expected_by",
+                "operator": "eq",
+                "value": "2026-08-22T23:59:59Z"
+              },
+              {
+                "field": "settled_at",
+                "operator": "eq",
+                "value": "null"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-7001",
+            "claim": "A post-window status check found the settlement pending because the payment was absent after the expected window.",
+            "assertions": [
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "pending"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "payment_absent_from_settlement_after_expected_window"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      },
+      {
+        "hypothesis_id": "H2",
+        "description": "The payment has no settlement record at all.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "settlement",
+            "record_id": "SET-7001",
+            "claim": "A settlement record exists for payment PI-1007.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1007"
+              },
+              {
+                "field": "gross_amount",
+                "operator": "eq",
+                "value": "620.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "hypothesis_id": "H3",
+        "description": "The supplied records establish why the settlement remains pending.",
+        "status": "inconclusive",
+        "supporting_evidence": [],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "Payment PI-1007 was captured for 620.00 USD and has a matching settlement record, but settlement SET-7001 remained pending with no settled_at timestamp after its 2026-08-22T23:59:59Z expected-by time. Thus, the exception is an overdue pending settlement rather than a completely missing settlement record.",
+    "root_cause": null,
+    "first_divergence": "The first established lifecycle divergence is that settlement SET-7001 remained pending after its expected_by time of 2026-08-22T23:59:59Z, with settled_at still null; the supplied records do not identify the cause of that delay.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1007",
+        "claim": "The invoice is marked paid for 620.00 USD.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "620.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-7001",
+        "claim": "The gateway recorded capture of PI-1007 against INV-1007.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1007"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1007"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-7001",
+        "claim": "The matching settlement remains pending beyond its expected window.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1007"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "pending"
+          },
+          {
+            "field": "expected_by",
+            "operator": "eq",
+            "value": "2026-08-22T23:59:59Z"
+          },
+          {
+            "field": "settled_at",
+            "operator": "eq",
+            "value": "null"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-7001",
+        "claim": "The latest supplied settlement status check returned pending.",
+        "assertions": [
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "pending"
+          },
+          {
+            "field": "occurred_at",
+            "operator": "eq",
+            "value": "2026-08-25T11:00:00Z"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [
+      {
+        "source": "settlement",
+        "record_id": "SET-7001",
+        "claim": "Contrary to the report that the payment has not appeared in settlement, a matching settlement record exists, although it is pending.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1007"
+          },
+          {
+            "field": "gross_amount",
+            "operator": "eq",
+            "value": "620.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      }
+    ],
+    "confidence": 0.97,
+    "recommended_action": "Have a human review the overdue pending settlement SET-7001 and obtain the missing settlement-status explanation before making any financial adjustment. Do not recapture, refund, or manually mark the payment settled based only on these records.",
+    "requires_human_approval": true,
+    "abstained": true,
+    "abstention_reason": "The records establish an overdue pending settlement but provide no event or reason explaining why settlement did not complete, so the root cause cannot be determined from the supplied evidence."
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-007",
+        "invoice_ids": [
+          "INV-1007"
+        ],
+        "payment_ids": [
+          "PI-1007"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1007",
+          "case_id": "PAY-007",
+          "customer_id": "CUS-007",
+          "amount": "620.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-19T09:00:00Z",
+          "updated_at": "2026-08-19T09:10:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-7001",
+          "case_id": "PAY-007",
+          "payment_id": "PI-1007",
+          "invoice_reference": "INV-1007",
+          "event_type": "payment_captured",
+          "amount": "620.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-19T09:05:00Z"
+        }
+      ],
+      "webhook_events": [],
+      "settlements": [
+        {
+          "settlement_id": "SET-7001",
+          "case_id": "PAY-007",
+          "payment_id": "PI-1007",
+          "gross_amount": "620.00",
+          "net_amount": "601.40",
+          "currency": "USD",
+          "status": "pending",
+          "expected_by": "2026-08-22T23:59:59Z",
+          "settled_at": null
+        }
+      ],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-7001",
+          "case_id": "PAY-007",
+          "entity_type": "payment",
+          "entity_id": "PI-1007",
+          "event_type": "settlement_status_check",
+          "result": "pending",
+          "reason": "payment_absent_from_settlement_after_expected_window",
+          "occurred_at": "2026-08-25T11:00:00Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-19T09:05:00+00:00",
+          "record_id": "GE-7001"
+        }
+      ]
+    }
+  }
+}
