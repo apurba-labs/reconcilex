@@ -209,7 +209,7 @@ class AgentInvestigator:
                 verified_evidence.append(evidence)
             else:
                 rejected_evidence.append(evidence)
-
+                
         if rejected_evidence and not action.abstained:
             trajectory.add_step(
                 step_type=StepType.FINAL,

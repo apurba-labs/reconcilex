@@ -1,0 +1,298 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-005",
+  "result": {
+    "case_id": "PAY-005",
+    "reported_issue": "A settled payment later received a chargeback but the invoice still appears normally paid.",
+    "hypotheses": [],
+    "finding": "PI-1005 settled successfully, then received a gateway chargeback. INV-1005 remained paid, and AUD-5001 confirms that the subsequent chargeback-state synchronization failed.",
+    "root_cause": "The invoice chargeback-state synchronization failed. The available evidence does not establish the lower-level technical cause of that synchronization failure; the empty webhook result alone cannot distinguish delivery failure from processing failure.",
+    "first_divergence": "At 2026-08-25T13:00:05Z, AUD-5001 recorded a failed chargeback_state_sync after GE-5002 created the chargeback, leaving INV-1005 in paid status.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-5002",
+        "claim": "The gateway recorded a USD 1000.00 chargeback for PI-1005 referencing INV-1005.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "chargeback_created"
+          },
+          {
+            "field": "occurred_at",
+            "operator": "eq",
+            "value": "2026-08-25T13:00:00Z"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1005"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-5001",
+        "claim": "The payment settled before the chargeback.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "settled"
+          },
+          {
+            "field": "settled_at",
+            "operator": "eq",
+            "value": "2026-08-11T09:00:00Z"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1005",
+        "claim": "The invoice remains paid and was not updated after the chargeback.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          },
+          {
+            "field": "updated_at",
+            "operator": "eq",
+            "value": "2026-08-10T08:10:00Z"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-5001",
+        "claim": "The invoice chargeback-state synchronization failed immediately after the gateway chargeback because the invoice status was not adjusted.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "chargeback_state_sync"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "invoice_status_not_adjusted_after_chargeback"
+          },
+          {
+            "field": "occurred_at",
+            "operator": "eq",
+            "value": "2026-08-25T13:00:05Z"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.98,
+    "recommended_action": "Have an authorized operator investigate and remediate the failed synchronization, then reconcile the invoice and associated accounting state against the confirmed chargeback. Any invoice or ledger mutation requires human approval.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "trajectory": {
+    "case_id": "PAY-005",
+    "steps": [
+      {
+        "step_number": 1,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The gateway recorded a chargeback after settlement, but that post-payment event was not propagated to the invoice state.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 2,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_gateway_events.",
+        "tool_call": {
+          "tool_name": "get_gateway_events",
+          "arguments": {
+            "payment_id": "PI-1005"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 3,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"amount\": \"1000.00\", \"case_id\": \"PAY-005\", \"currency\": \"USD\", \"event_id\": \"GE-5001\", \"event_type\": \"payment_captured\", \"invoice_reference\": \"INV-1005\", \"occurred_at\": \"2026-08-10T08:05:00Z\", \"payment_id\": \"PI-1005\"}, {\"amount\": \"1000.00\", \"case_id\": \"PAY-005\", \"currency\": \"USD\", \"event_id\": \"GE-5002\", \"event_type\": \"chargeback_created\", \"invoice_reference\": \"INV-1005\", \"occurred_at\": \"2026-08-25T13:00:00Z\", \"payment_id\": \"PI-1005\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "GE-5001",
+          "GE-5002"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 4,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The gateway recorded a chargeback after settlement, but that post-payment event was not propagated to the invoice state.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 5,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_invoice.",
+        "tool_call": {
+          "tool_name": "get_invoice",
+          "arguments": {
+            "invoice_id": "INV-1005"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 6,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "{\"amount\": \"1000.00\", \"case_id\": \"PAY-005\", \"created_at\": \"2026-08-10T08:00:00Z\", \"currency\": \"USD\", \"customer_id\": \"CUS-005\", \"invoice_id\": \"INV-1005\", \"status\": \"paid\", \"updated_at\": \"2026-08-10T08:10:00Z\"}",
+        "tool_call": null,
+        "observation_record_ids": [
+          "INV-1005"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 7,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The gateway recorded a chargeback, but the chargeback event may not have been delivered or processed through the webhook path that updates invoice state.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 8,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_webhook_events.",
+        "tool_call": {
+          "tool_name": "get_webhook_events",
+          "arguments": {
+            "payment_id": "PI-1005"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 9,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[]",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 10,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The payment was settled before the gateway chargeback, after which the invoice remained paid; settlement evidence is needed to establish the lifecycle sequence before investigating why the chargeback was not reflected.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 11,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_settlements.",
+        "tool_call": {
+          "tool_name": "get_settlements",
+          "arguments": {
+            "payment_id": "PI-1005"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 12,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"case_id\": \"PAY-005\", \"currency\": \"USD\", \"expected_by\": \"2026-08-12T23:59:59Z\", \"gross_amount\": \"1000.00\", \"net_amount\": \"970.00\", \"payment_id\": \"PI-1005\", \"settled_at\": \"2026-08-11T09:00:00Z\", \"settlement_id\": \"SET-5001\", \"status\": \"settled\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "SET-5001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 13,
+        "step_type": "hypothesis",
+        "hypothesis_id": "H1",
+        "content": "The invoice remained paid after the gateway chargeback, but the empty webhook result does not establish whether delivery failed, processing failed, or the invoice was later changed; invoice audit history is needed to identify the first defensible divergence.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 14,
+        "step_type": "tool_call",
+        "hypothesis_id": "H1",
+        "content": "Call get_audit_events.",
+        "tool_call": {
+          "tool_name": "get_audit_events",
+          "arguments": {
+            "entity_id": "INV-1005"
+          }
+        },
+        "observation_record_ids": [],
+        "decision": null
+      },
+      {
+        "step_number": 15,
+        "step_type": "observation",
+        "hypothesis_id": "H1",
+        "content": "[{\"audit_id\": \"AUD-5001\", \"case_id\": \"PAY-005\", \"entity_id\": \"INV-1005\", \"entity_type\": \"invoice\", \"event_type\": \"chargeback_state_sync\", \"occurred_at\": \"2026-08-25T13:00:05Z\", \"reason\": \"invoice_status_not_adjusted_after_chargeback\", \"result\": \"failed\"}]",
+        "tool_call": null,
+        "observation_record_ids": [
+          "AUD-5001"
+        ],
+        "decision": null
+      },
+      {
+        "step_number": 16,
+        "step_type": "decision",
+        "hypothesis_id": "H1",
+        "content": "Gateway event GE-5002 records the chargeback after settlement, while invoice INV-1005 remains paid. Audit event AUD-5001 directly establishes that the chargeback state synchronization failed because the invoice status was not adjusted. This is the first defensible divergence; the empty webhook result alone does not identify whether webhook delivery or processing caused the failure.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "support"
+      },
+      {
+        "step_number": 17,
+        "step_type": "final",
+        "hypothesis_id": "H1",
+        "content": "PI-1005 settled successfully, then received a gateway chargeback. INV-1005 remained paid, and AUD-5001 confirms that the subsequent chargeback-state synchronization failed.",
+        "tool_call": null,
+        "observation_record_ids": [],
+        "decision": "complete"
+      }
+    ],
+    "completed": true,
+    "abstained": false
+  }
+}

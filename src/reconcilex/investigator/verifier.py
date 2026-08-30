@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -183,6 +184,28 @@ class EvidenceVerifier:
 
         if value is None:
             return ""
+
+        if isinstance(value, datetime):
+            normalized = value.astimezone(timezone.utc)
+            return normalized.isoformat().replace("+00:00", "Z")
+
+        if isinstance(value, str):
+            candidate = value.strip()
+
+            if candidate.lower() in {"null", "none"}:
+                return ""
+
+            try:
+                parsed = datetime.fromisoformat(
+                    candidate.replace("Z", "+00:00")
+                )
+            except ValueError:
+                return candidate
+
+            if parsed.tzinfo is not None:
+                parsed = parsed.astimezone(timezone.utc)
+
+            return parsed.isoformat().replace("+00:00", "Z")
 
         return str(value)
 

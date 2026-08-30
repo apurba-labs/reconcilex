@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from reconcilex.domain.record_loader import PaymentRecordStore
 from reconcilex.investigator.models import (
     EvidenceRef, 
@@ -246,3 +248,42 @@ def test_verifies_structured_audit_assertion():
     result = verifier.verify(evidence)
 
     assert result.verified is True
+
+def test_normalize_datetime_and_iso_z_are_equivalent():
+    actual = datetime(
+        2026,
+        8,
+        11,
+        9,
+        0,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    expected = "2026-08-11T09:00:00Z"
+
+    assert EvidenceVerifier._normalize_value(
+        actual
+    ) == EvidenceVerifier._normalize_value(
+        expected
+    )
+
+
+def test_normalize_non_datetime_string_is_unchanged():
+    assert (
+        EvidenceVerifier._normalize_value("payment_captured")
+        == "payment_captured"
+    )
+    
+def test_normalize_null_string_matches_none():
+    assert (
+        EvidenceVerifier._normalize_value("null")
+        == EvidenceVerifier._normalize_value(None)
+    )
+
+
+def test_normalize_none_string_matches_none():
+    assert (
+        EvidenceVerifier._normalize_value("None")
+        == EvidenceVerifier._normalize_value(None)
+    )
