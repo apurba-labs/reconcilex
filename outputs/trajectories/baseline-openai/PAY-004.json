@@ -1,0 +1,322 @@
+{
+  "mode": "baseline",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-004",
+  "result": {
+    "case_id": "PAY-004",
+    "reported_issue": "Finance reports that the refund amount shown internally disagrees with the gateway.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "H1",
+        "description": "The internal refund record understated the succeeded refund by USD 50.00, recording USD 200.00 instead of USD 250.00.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "refund",
+            "record_id": "REF-4001",
+            "claim": "The succeeded refund amount is USD 250.00.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1004"
+              },
+              {
+                "field": "invoice_id",
+                "operator": "eq",
+                "value": "INV-1004"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "250.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "succeeded"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-4001",
+            "claim": "The internal system recorded a refund amount of USD 200.00 two seconds after the succeeded refund was created.",
+            "assertions": [
+              {
+                "field": "entity_id",
+                "operator": "eq",
+                "value": "PI-1004"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "internal_refund_recorded"
+              },
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "processed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "internal_refund_amount_200.00"
+              },
+              {
+                "field": "occurred_at",
+                "operator": "eq",
+                "value": "2026-08-20T15:00:02Z"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      },
+      {
+        "hypothesis_id": "H2",
+        "description": "The discrepancy was caused by the refund being associated with a different payment or invoice.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "refund",
+            "record_id": "REF-4001",
+            "claim": "The succeeded refund is associated with the case payment and invoice.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1004"
+              },
+              {
+                "field": "invoice_id",
+                "operator": "eq",
+                "value": "INV-1004"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-4001",
+            "claim": "The internal refund entry is associated with the same payment.",
+            "assertions": [
+              {
+                "field": "entity_id",
+                "operator": "eq",
+                "value": "PI-1004"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "finding": "Refund REF-4001 succeeded for USD 250.00, while the internal audit record for the same payment records USD 200.00. The internal amount is understated by USD 50.00.",
+    "root_cause": "The internal refund-recording step processed USD 200.00 rather than the USD 250.00 amount on the succeeded refund record. The supplied records do not establish why the incorrect amount was used.",
+    "first_divergence": "The first evidenced divergence occurred at 2026-08-20T15:00:02Z in audit event AUD-4001, two seconds after REF-4001 was created for USD 250.00, when the internal refund was recorded as USD 200.00.",
+    "evidence": [
+      {
+        "source": "refund",
+        "record_id": "REF-4001",
+        "claim": "Refund REF-4001 succeeded for USD 250.00 on payment PI-1004 and invoice INV-1004.",
+        "assertions": [
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "250.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "succeeded"
+          },
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1004"
+          },
+          {
+            "field": "invoice_id",
+            "operator": "eq",
+            "value": "INV-1004"
+          },
+          {
+            "field": "created_at",
+            "operator": "eq",
+            "value": "2026-08-20T15:00:00Z"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-4001",
+        "claim": "The internal system processed a refund record containing amount 200.00 for PI-1004.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "internal_refund_recorded"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "processed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "internal_refund_amount_200.00"
+          },
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "PI-1004"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-4001",
+        "claim": "The original payment of USD 800.00 was captured for PI-1004 and INV-1004.",
+        "assertions": [
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "800.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1004"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1004"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.99,
+    "recommended_action": "Have a human reviewer validate REF-4001 against the gateway and then correct or reprocess the internal refund record from USD 200.00 to USD 250.00. Do not initiate another refund, because the supplied refund record already shows USD 250.00 succeeded. Also review whether the invoice remaining paid is expected under the applicable accounting workflow.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-004",
+        "invoice_ids": [
+          "INV-1004"
+        ],
+        "payment_ids": [
+          "PI-1004"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1004",
+          "case_id": "PAY-004",
+          "customer_id": "CUS-004",
+          "amount": "800.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-17T12:00:00Z",
+          "updated_at": "2026-08-17T12:08:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-4001",
+          "case_id": "PAY-004",
+          "payment_id": "PI-1004",
+          "invoice_reference": "INV-1004",
+          "event_type": "payment_captured",
+          "amount": "800.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-17T12:04:00Z"
+        }
+      ],
+      "webhook_events": [],
+      "settlements": [],
+      "refunds": [
+        {
+          "refund_id": "REF-4001",
+          "case_id": "PAY-004",
+          "payment_id": "PI-1004",
+          "invoice_id": "INV-1004",
+          "amount": "250.00",
+          "currency": "USD",
+          "status": "succeeded",
+          "created_at": "2026-08-20T15:00:00Z"
+        }
+      ],
+      "audit_events": [
+        {
+          "audit_id": "AUD-4001",
+          "case_id": "PAY-004",
+          "entity_type": "payment",
+          "entity_id": "PI-1004",
+          "event_type": "internal_refund_recorded",
+          "result": "processed",
+          "reason": "internal_refund_amount_200.00",
+          "occurred_at": "2026-08-20T15:00:02Z"
+        },
+        {
+          "audit_id": "AUD-4002",
+          "case_id": "PAY-004",
+          "entity_type": "invoice",
+          "entity_id": "INV-1004",
+          "event_type": "invoice_state_check",
+          "result": "processed",
+          "reason": "invoice_remains_paid",
+          "occurred_at": "2026-08-20T15:00:04Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-17T12:04:00+00:00",
+          "record_id": "GE-4001"
+        },
+        {
+          "source": "refund",
+          "event_type": "refund",
+          "timestamp": "2026-08-20T15:00:00+00:00",
+          "record_id": "REF-4001",
+          "status": "succeeded"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-010",
+  "result": {
+    "case_id": "PAY-010",
+    "reported_issue": "Finance detected an unexpected duplicate internal payment effect.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-01",
+        "description": "The webhook WH-1010 was delivered and processed twice, leading to a duplicate payment application because the webhook processing system lacks idempotency checks for duplicate webhook IDs.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "webhook_event",
+            "record_id": "WH-1010",
+            "claim": "Webhook WH-1010 was processed twice, first at 2026-08-22T10:04:03Z and again at 2026-08-22T10:04:08Z.",
+            "assertions": [
+              {
+                "field": "processing_status",
+                "operator": "eq",
+                "value": "processed"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-10002",
+            "claim": "A duplicate payment effect was applied to invoice INV-1010 at 2026-08-22T10:04:09Z.",
+            "assertions": [
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "duplicate_payment_effect_applied"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The webhook WH-1010 was processed twice due to a lack of idempotency protection, resulting in a duplicate payment application (AUD-10002) on invoice INV-1010.",
+    "root_cause": "Lack of idempotency key validation/enforcement on webhook processing, allowing the same webhook ID (WH-1010) to trigger multiple payment application events.",
+    "first_divergence": "WH-1010 (second delivery at 2026-08-22T10:04:08Z)",
+    "evidence": [
+      {
+        "source": "webhook_event",
+        "record_id": "WH-1010",
+        "claim": "Webhook WH-1010 was processed twice, first at 2026-08-22T10:04:03Z and again at 2026-08-22T10:04:08Z.",
+        "assertions": [
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-10002",
+        "claim": "A duplicate payment effect was applied to invoice INV-1010 at 2026-08-22T10:04:09Z.",
+        "assertions": [
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "duplicate_payment_effect_applied"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 1.0,
+    "recommended_action": "Implement idempotency checks on webhook processing using the webhook ID as the unique key, and reverse the duplicate payment effect applied under AUD-10002.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-010",
+        "invoice_ids": [
+          "INV-1010"
+        ],
+        "payment_ids": [
+          "PI-1010"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1010",
+          "case_id": "PAY-010",
+          "customer_id": "CUS-010",
+          "amount": "525.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-22T10:00:00Z",
+          "updated_at": "2026-08-22T10:07:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-10001",
+          "case_id": "PAY-010",
+          "payment_id": "PI-1010",
+          "invoice_reference": "INV-1010",
+          "event_type": "payment_captured",
+          "amount": "525.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-22T10:04:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-1010",
+          "case_id": "PAY-010",
+          "gateway_event_id": "GE-10001",
+          "payment_id": "PI-1010",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-22T10:04:03Z"
+        },
+        {
+          "webhook_id": "WH-1010",
+          "case_id": "PAY-010",
+          "gateway_event_id": "GE-10001",
+          "payment_id": "PI-1010",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-22T10:04:08Z"
+        }
+      ],
+      "settlements": [],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-10001",
+          "case_id": "PAY-010",
+          "entity_type": "invoice",
+          "entity_id": "INV-1010",
+          "event_type": "payment_application",
+          "result": "processed",
+          "reason": "payment_effect_applied",
+          "occurred_at": "2026-08-22T10:04:04Z"
+        },
+        {
+          "audit_id": "AUD-10002",
+          "case_id": "PAY-010",
+          "entity_type": "invoice",
+          "entity_id": "INV-1010",
+          "event_type": "payment_application",
+          "result": "processed",
+          "reason": "duplicate_payment_effect_applied",
+          "occurred_at": "2026-08-22T10:04:09Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-22T10:04:00+00:00",
+          "record_id": "GE-10001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-22T10:04:03+00:00",
+          "record_id": "WH-1010",
+          "processing_status": "processed",
+          "http_status": 200
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-22T10:04:08+00:00",
+          "record_id": "WH-1010",
+          "processing_status": "processed",
+          "http_status": 200
+        }
+      ]
+    }
+  }
+}

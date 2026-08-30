@@ -1,0 +1,359 @@
+{
+  "mode": "baseline",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-010",
+  "result": {
+    "case_id": "PAY-010",
+    "reported_issue": "Finance detected an unexpected duplicate internal payment effect.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "H1",
+        "description": "The same captured-payment webhook was processed twice, causing a duplicate internal payment application.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "webhook_event",
+            "record_id": "WH-1010",
+            "claim": "The same webhook identifier and gateway event were recorded as processed at both 2026-08-22T10:04:03Z and 2026-08-22T10:04:08Z.",
+            "assertions": [
+              {
+                "field": "webhook_id",
+                "operator": "eq",
+                "value": "WH-1010"
+              },
+              {
+                "field": "gateway_event_id",
+                "operator": "eq",
+                "value": "GE-10001"
+              },
+              {
+                "field": "processing_status",
+                "operator": "eq",
+                "value": "processed"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-10002",
+            "claim": "The second payment application was explicitly recorded as a duplicate payment effect.",
+            "assertions": [
+              {
+                "field": "entity_id",
+                "operator": "eq",
+                "value": "INV-1010"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_application"
+              },
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "processed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "duplicate_payment_effect_applied"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      },
+      {
+        "hypothesis_id": "H2",
+        "description": "Two separate gateway captures caused the duplicate effect.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-10001",
+            "claim": "The supplied records contain one gateway capture for USD 525.00 associated with PI-1010 and INV-1010.",
+            "assertions": [
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "payment_captured"
+              },
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1010"
+              },
+              {
+                "field": "invoice_reference",
+                "operator": "eq",
+                "value": "INV-1010"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "525.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "finding": "The reported duplicate internal payment effect is confirmed. A single gateway capture was delivered under the same webhook identifier twice, both deliveries were marked processed, and two internal payment applications followed.",
+    "root_cause": "Internal webhook deduplication or idempotency enforcement failed: the repeated WH-1010 delivery for GE-10001 was processed again and produced a second payment application.",
+    "first_divergence": "At 2026-08-22T10:04:08Z, the repeated WH-1010 webhook was accepted as processed instead of being suppressed as a duplicate. AUD-10002 then recorded the duplicate internal effect at 2026-08-22T10:04:09Z.",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-10001",
+        "claim": "One captured payment of USD 525.00 is recorded for PI-1010 and INV-1010.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1010"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1010"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "525.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-1010",
+        "claim": "WH-1010 appears twice for the same gateway event and payment, and both occurrences were processed successfully.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-10001"
+          },
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1010"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "200"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-10001",
+        "claim": "The first internal payment effect was applied after the initial webhook processing.",
+        "assertions": [
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "INV-1010"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "processed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "payment_effect_applied"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-10002",
+        "claim": "A second internal application was processed and identified as a duplicate payment effect.",
+        "assertions": [
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "INV-1010"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "processed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "duplicate_payment_effect_applied"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-10001",
+        "claim": "The supplied gateway records do not show a second capture, contradicting an external duplicate-charge explanation.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1010"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "525.00"
+          }
+        ]
+      }
+    ],
+    "confidence": 0.99,
+    "recommended_action": "Prevent any further automated application of WH-1010 or GE-10001, inspect the internal ledger impact, and\u2014with human approval\u2014reverse only the duplicate internal effect represented by AUD-10002. Do not initiate a gateway refund based on these records because only one gateway capture is supplied. Add or repair idempotent processing keyed to the webhook or gateway event identifier before replaying related events.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-010",
+        "invoice_ids": [
+          "INV-1010"
+        ],
+        "payment_ids": [
+          "PI-1010"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1010",
+          "case_id": "PAY-010",
+          "customer_id": "CUS-010",
+          "amount": "525.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-22T10:00:00Z",
+          "updated_at": "2026-08-22T10:07:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-10001",
+          "case_id": "PAY-010",
+          "payment_id": "PI-1010",
+          "invoice_reference": "INV-1010",
+          "event_type": "payment_captured",
+          "amount": "525.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-22T10:04:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-1010",
+          "case_id": "PAY-010",
+          "gateway_event_id": "GE-10001",
+          "payment_id": "PI-1010",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-22T10:04:03Z"
+        },
+        {
+          "webhook_id": "WH-1010",
+          "case_id": "PAY-010",
+          "gateway_event_id": "GE-10001",
+          "payment_id": "PI-1010",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-22T10:04:08Z"
+        }
+      ],
+      "settlements": [],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-10001",
+          "case_id": "PAY-010",
+          "entity_type": "invoice",
+          "entity_id": "INV-1010",
+          "event_type": "payment_application",
+          "result": "processed",
+          "reason": "payment_effect_applied",
+          "occurred_at": "2026-08-22T10:04:04Z"
+        },
+        {
+          "audit_id": "AUD-10002",
+          "case_id": "PAY-010",
+          "entity_type": "invoice",
+          "entity_id": "INV-1010",
+          "event_type": "payment_application",
+          "result": "processed",
+          "reason": "duplicate_payment_effect_applied",
+          "occurred_at": "2026-08-22T10:04:09Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-22T10:04:00+00:00",
+          "record_id": "GE-10001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-22T10:04:03+00:00",
+          "record_id": "WH-1010",
+          "processing_status": "processed",
+          "http_status": 200
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-22T10:04:08+00:00",
+          "record_id": "WH-1010",
+          "processing_status": "processed",
+          "http_status": 200
+        }
+      ]
+    }
+  }
+}

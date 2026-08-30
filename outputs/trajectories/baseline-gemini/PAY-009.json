@@ -1,0 +1,197 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-009",
+  "result": {
+    "case_id": "PAY-009",
+    "reported_issue": "A customer payment exists, but the expected invoice remains unpaid.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "description": "The payment PI-1009 was initiated with an incorrect invoice reference (INV-1909 instead of INV-1009), causing the payment to be applied to the wrong invoice.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "gateway_event",
+            "record_id": "GE-9001",
+            "claim": "The gateway event for payment PI-1009 references invoice INV-1909 instead of INV-1009.",
+            "assertions": [
+              {
+                "field": "invoice_reference",
+                "operator": "eq",
+                "value": "INV-1909"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-9001",
+            "claim": "The system resolved the payment reference to INV-1909.",
+            "assertions": [
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "gateway_reference_resolved_to_INV-1909"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "The payment PI-1009 was applied to the wrong invoice (INV-1909) due to an incorrect invoice reference in the gateway transaction, leaving the intended invoice INV-1009 unpaid.",
+    "root_cause": "The gateway event GE-9001 contained an incorrect invoice reference 'INV-1909' instead of 'INV-1009', likely due to a transposition error during payment initiation.",
+    "first_divergence": "GE-9001",
+    "evidence": [
+      {
+        "source": "gateway_event",
+        "record_id": "GE-9001",
+        "claim": "The gateway event GE-9001 for payment PI-1009 references invoice INV-1909.",
+        "assertions": [
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1909"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-9001",
+        "claim": "The system resolved the payment reference to INV-1909 based on the gateway reference.",
+        "assertions": [
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "gateway_reference_resolved_to_INV-1909"
+          }
+        ]
+      },
+      {
+        "source": "invoice",
+        "record_id": "INV-1009",
+        "claim": "The intended invoice INV-1009 remains unpaid.",
+        "assertions": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "unpaid"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.95,
+    "recommended_action": "Reallocate the payment PI-1009 from invoice INV-1909 to the correct invoice INV-1009, and revert the status of INV-1909 to unpaid pending further review of its actual payment status.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-009",
+        "invoice_ids": [
+          "INV-1009",
+          "INV-1909"
+        ],
+        "payment_ids": [
+          "PI-1009"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1009",
+          "case_id": "PAY-009",
+          "customer_id": "CUS-009",
+          "amount": "350.00",
+          "currency": "USD",
+          "status": "unpaid",
+          "created_at": "2026-08-21T09:00:00Z",
+          "updated_at": "2026-08-21T09:10:00Z"
+        },
+        {
+          "invoice_id": "INV-1909",
+          "case_id": "PAY-009",
+          "customer_id": "CUS-099",
+          "amount": "350.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-21T08:30:00Z",
+          "updated_at": "2026-08-21T09:06:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-9001",
+          "case_id": "PAY-009",
+          "payment_id": "PI-1009",
+          "invoice_reference": "INV-1909",
+          "event_type": "payment_captured",
+          "amount": "350.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-21T09:05:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-9001",
+          "case_id": "PAY-009",
+          "gateway_event_id": "GE-9001",
+          "payment_id": "PI-1009",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-21T09:05:03Z"
+        }
+      ],
+      "settlements": [],
+      "refunds": [],
+      "audit_events": [
+        {
+          "audit_id": "AUD-9001",
+          "case_id": "PAY-009",
+          "entity_type": "payment",
+          "entity_id": "PI-1009",
+          "event_type": "payment_reference_resolved",
+          "result": "processed",
+          "reason": "gateway_reference_resolved_to_INV-1909",
+          "occurred_at": "2026-08-21T09:05:04Z"
+        },
+        {
+          "audit_id": "AUD-9002",
+          "case_id": "PAY-009",
+          "entity_type": "invoice",
+          "entity_id": "INV-1909",
+          "event_type": "payment_application",
+          "result": "processed",
+          "reason": "payment_applied_to_referenced_invoice",
+          "occurred_at": "2026-08-21T09:05:05Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-21T09:05:00+00:00",
+          "record_id": "GE-9001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-21T09:05:03+00:00",
+          "record_id": "WH-9001",
+          "processing_status": "processed",
+          "http_status": 200
+        }
+      ]
+    }
+  }
+}

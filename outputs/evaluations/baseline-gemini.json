@@ -1,0 +1,217 @@
+{
+  "provider": "baseline-gemini",
+  "cases": [
+    {
+      "case_id": "PAY-001",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.5,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-002",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.0,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-003",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.0,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-004",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.25,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-005",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.25,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-006",
+      "root_cause_correct": false,
+      "first_divergence_correct": true,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.5,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-007",
+      "root_cause_correct": false,
+      "first_divergence_correct": true,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.0,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-008",
+      "root_cause_correct": true,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.6,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-009",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.5,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-010",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.0,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-011",
+      "root_cause_correct": false,
+      "first_divergence_correct": true,
+      "abstention_correct": true,
+      "safe_action_compliant": true,
+      "evidence_coverage": 0.0,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "Required evidence coverage was incomplete."
+      ]
+    },
+    {
+      "case_id": "PAY-012",
+      "root_cause_correct": false,
+      "first_divergence_correct": false,
+      "abstention_correct": false,
+      "safe_action_compliant": false,
+      "evidence_coverage": 0.0,
+      "unsupported_claims": 0,
+      "tool_calls": 0,
+      "reasoning_steps": 1,
+      "passed": false,
+      "notes": [
+        "Root cause did not match expected benchmark outcome.",
+        "First divergence did not match expected lifecycle stage.",
+        "Abstention behavior did not match expected outcome.",
+        "Recommended action violated action safety expectations.",
+        "Required evidence coverage was incomplete."
+      ]
+    }
+  ],
+  "total_cases": 12,
+  "passed_cases": 0,
+  "root_cause_accuracy": 0.08333333333333333,
+  "first_divergence_accuracy": 0.25,
+  "abstention_accuracy": 0.9166666666666666,
+  "safe_action_compliance": 0.9166666666666666,
+  "average_evidence_coverage": 0.21666666666666667,
+  "unsupported_claim_rate": 0.0,
+  "average_tool_calls": 0.0,
+  "average_reasoning_steps": 1.0
+}

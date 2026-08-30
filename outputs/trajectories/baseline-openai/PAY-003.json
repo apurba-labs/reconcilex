@@ -1,0 +1,431 @@
+{
+  "mode": "baseline",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "case_id": "PAY-003",
+  "result": {
+    "case_id": "PAY-003",
+    "reported_issue": "Customer received a full refund, but the invoice still appears paid.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "H1",
+        "description": "The full refund succeeded, but the invoice remained paid because the refund-to-invoice state synchronization failed.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "refund",
+            "record_id": "REF-3001",
+            "claim": "A full refund matching the invoice amount and currency succeeded for the associated payment and invoice.",
+            "assertions": [
+              {
+                "field": "payment_id",
+                "operator": "eq",
+                "value": "PI-1003"
+              },
+              {
+                "field": "invoice_id",
+                "operator": "eq",
+                "value": "INV-1003"
+              },
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "450.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "succeeded"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-3001",
+            "claim": "The refund state synchronization failed because the invoice status update was not applied.",
+            "assertions": [
+              {
+                "field": "entity_id",
+                "operator": "eq",
+                "value": "INV-1003"
+              },
+              {
+                "field": "event_type",
+                "operator": "eq",
+                "value": "refund_state_sync"
+              },
+              {
+                "field": "result",
+                "operator": "eq",
+                "value": "failed"
+              },
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "invoice_status_update_not_applied"
+              }
+            ]
+          },
+          {
+            "source": "invoice",
+            "record_id": "INV-1003",
+            "claim": "The invoice still has paid status and was last updated before the refund occurred.",
+            "assertions": [
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "paid"
+              },
+              {
+                "field": "updated_at",
+                "operator": "eq",
+                "value": "2026-08-18T09:10:00Z"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      },
+      {
+        "hypothesis_id": "H2",
+        "description": "The invoice remains paid because the refund did not succeed or was not for the full invoice amount.",
+        "status": "rejected",
+        "supporting_evidence": [],
+        "contradicting_evidence": [
+          {
+            "source": "refund",
+            "record_id": "REF-3001",
+            "claim": "The refund succeeded for the full USD 450.00 invoice amount.",
+            "assertions": [
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "450.00"
+              },
+              {
+                "field": "currency",
+                "operator": "eq",
+                "value": "USD"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "succeeded"
+              },
+              {
+                "field": "invoice_id",
+                "operator": "eq",
+                "value": "INV-1003"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "finding": "The reported exception is confirmed: refund REF-3001 succeeded for the full invoice amount, while INV-1003 remains marked paid.",
+    "root_cause": "The refund-to-invoice state synchronization failed; audit event AUD-3001 records that the invoice status update was not applied.",
+    "first_divergence": "The first lifecycle divergence occurred at 2026-08-22T14:00:05Z, five seconds after the successful refund was created, when refund_state_sync failed for INV-1003 with reason invoice_status_update_not_applied.",
+    "evidence": [
+      {
+        "source": "invoice",
+        "record_id": "INV-1003",
+        "claim": "The invoice remains paid for USD 450.00.",
+        "assertions": [
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "450.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paid"
+          }
+        ]
+      },
+      {
+        "source": "refund",
+        "record_id": "REF-3001",
+        "claim": "The associated payment and invoice received a successful full refund of USD 450.00.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1003"
+          },
+          {
+            "field": "invoice_id",
+            "operator": "eq",
+            "value": "INV-1003"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "450.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "succeeded"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-3001",
+        "claim": "The invoice refund-state synchronization failed because the status update was not applied.",
+        "assertions": [
+          {
+            "field": "entity_type",
+            "operator": "eq",
+            "value": "invoice"
+          },
+          {
+            "field": "entity_id",
+            "operator": "eq",
+            "value": "INV-1003"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "refund_state_sync"
+          },
+          {
+            "field": "result",
+            "operator": "eq",
+            "value": "failed"
+          },
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "invoice_status_update_not_applied"
+          }
+        ]
+      },
+      {
+        "source": "gateway_event",
+        "record_id": "GE-3001",
+        "claim": "The original payment was captured for the full invoice amount.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1003"
+          },
+          {
+            "field": "invoice_reference",
+            "operator": "eq",
+            "value": "INV-1003"
+          },
+          {
+            "field": "event_type",
+            "operator": "eq",
+            "value": "payment_captured"
+          },
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "450.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          }
+        ]
+      },
+      {
+        "source": "webhook_event",
+        "record_id": "WH-3001",
+        "claim": "The original capture webhook was successfully processed.",
+        "assertions": [
+          {
+            "field": "gateway_event_id",
+            "operator": "eq",
+            "value": "GE-3001"
+          },
+          {
+            "field": "http_status",
+            "operator": "eq",
+            "value": "200"
+          },
+          {
+            "field": "processing_status",
+            "operator": "eq",
+            "value": "processed"
+          }
+        ]
+      },
+      {
+        "source": "settlement",
+        "record_id": "SET-3001",
+        "claim": "The original payment settled before the later refund.",
+        "assertions": [
+          {
+            "field": "payment_id",
+            "operator": "eq",
+            "value": "PI-1003"
+          },
+          {
+            "field": "gross_amount",
+            "operator": "eq",
+            "value": "450.00"
+          },
+          {
+            "field": "currency",
+            "operator": "eq",
+            "value": "USD"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "settled"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.99,
+    "recommended_action": "Have an authorized operator review REF-3001 and AUD-3001, then retry or repair the failed refund-state synchronization so INV-1003 reflects the successful full refund. Verify the resulting invoice status and preserve an audit trail. Do not issue another refund because the supplied record already shows a successful full refund.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-003",
+        "invoice_ids": [
+          "INV-1003"
+        ],
+        "payment_ids": [
+          "PI-1003"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1003",
+          "case_id": "PAY-003",
+          "customer_id": "CUS-003",
+          "amount": "450.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-18T09:00:00Z",
+          "updated_at": "2026-08-18T09:10:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-3001",
+          "case_id": "PAY-003",
+          "payment_id": "PI-1003",
+          "invoice_reference": "INV-1003",
+          "event_type": "payment_captured",
+          "amount": "450.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-18T09:05:00Z"
+        }
+      ],
+      "webhook_events": [
+        {
+          "webhook_id": "WH-3001",
+          "case_id": "PAY-003",
+          "gateway_event_id": "GE-3001",
+          "payment_id": "PI-1003",
+          "event_type": "payment.captured",
+          "http_status": 200,
+          "processing_status": "processed",
+          "occurred_at": "2026-08-18T09:05:03Z"
+        }
+      ],
+      "settlements": [
+        {
+          "settlement_id": "SET-3001",
+          "case_id": "PAY-003",
+          "payment_id": "PI-1003",
+          "gross_amount": "450.00",
+          "net_amount": "436.50",
+          "currency": "USD",
+          "status": "settled",
+          "expected_by": "2026-08-20T23:59:59Z",
+          "settled_at": "2026-08-19T08:00:00Z"
+        }
+      ],
+      "refunds": [
+        {
+          "refund_id": "REF-3001",
+          "case_id": "PAY-003",
+          "payment_id": "PI-1003",
+          "invoice_id": "INV-1003",
+          "amount": "450.00",
+          "currency": "USD",
+          "status": "succeeded",
+          "created_at": "2026-08-22T14:00:00Z"
+        }
+      ],
+      "audit_events": [
+        {
+          "audit_id": "AUD-3001",
+          "case_id": "PAY-003",
+          "entity_type": "invoice",
+          "entity_id": "INV-1003",
+          "event_type": "refund_state_sync",
+          "result": "failed",
+          "reason": "invoice_status_update_not_applied",
+          "occurred_at": "2026-08-22T14:00:05Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-18T09:05:00+00:00",
+          "record_id": "GE-3001"
+        },
+        {
+          "source": "webhook",
+          "event_type": "payment.captured",
+          "timestamp": "2026-08-18T09:05:03+00:00",
+          "record_id": "WH-3001",
+          "processing_status": "processed",
+          "http_status": 200
+        },
+        {
+          "source": "settlement",
+          "event_type": "settlement",
+          "timestamp": "2026-08-19T08:00:00+00:00",
+          "record_id": "SET-3001",
+          "status": "settled"
+        },
+        {
+          "source": "refund",
+          "event_type": "refund",
+          "timestamp": "2026-08-22T14:00:00+00:00",
+          "record_id": "REF-3001",
+          "status": "succeeded"
+        }
+      ]
+    }
+  }
+}

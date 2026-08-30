@@ -1,0 +1,178 @@
+{
+  "mode": "baseline",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "case_id": "PAY-004",
+  "result": {
+    "case_id": "PAY-004",
+    "reported_issue": "Finance reports that the refund amount shown internally disagrees with the gateway.",
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-01",
+        "description": "The internal system recorded a refund amount of 200.00 USD, which disagrees with the actual refund amount of 250.00 USD processed on the payment.",
+        "status": "supported",
+        "supporting_evidence": [
+          {
+            "source": "refund",
+            "record_id": "REF-4001",
+            "claim": "The refund record REF-4001 shows a successful refund of 250.00 USD.",
+            "assertions": [
+              {
+                "field": "amount",
+                "operator": "eq",
+                "value": "250.00"
+              },
+              {
+                "field": "status",
+                "operator": "eq",
+                "value": "succeeded"
+              }
+            ]
+          },
+          {
+            "source": "audit_event",
+            "record_id": "AUD-4001",
+            "claim": "The audit log AUD-4001 recorded an internal refund amount of 200.00 USD.",
+            "assertions": [
+              {
+                "field": "reason",
+                "operator": "eq",
+                "value": "internal_refund_amount_200.00"
+              }
+            ]
+          }
+        ],
+        "contradicting_evidence": []
+      }
+    ],
+    "finding": "There is a mismatch between the actual refund amount processed (250.00 USD) and the refund amount recorded in the internal audit logs (200.00 USD).",
+    "root_cause": "The internal system logged an incorrect refund amount of 200.00 USD during the 'internal_refund_recorded' event, whereas the actual refund transaction (REF-4001) was processed for 250.00 USD.",
+    "first_divergence": "AUD-4001",
+    "evidence": [
+      {
+        "source": "refund",
+        "record_id": "REF-4001",
+        "claim": "The refund record REF-4001 shows a successful refund of 250.00 USD.",
+        "assertions": [
+          {
+            "field": "amount",
+            "operator": "eq",
+            "value": "250.00"
+          }
+        ]
+      },
+      {
+        "source": "audit_event",
+        "record_id": "AUD-4001",
+        "claim": "The audit log AUD-4001 recorded an internal refund amount of 200.00 USD.",
+        "assertions": [
+          {
+            "field": "reason",
+            "operator": "eq",
+            "value": "internal_refund_amount_200.00"
+          }
+        ]
+      }
+    ],
+    "contradictory_evidence": [],
+    "confidence": 0.95,
+    "recommended_action": "Correct the internal ledger and database records to reflect the actual refund amount of 250.00 USD as processed in REF-4001, and review the internal refund creation service to identify why the incorrect amount was logged.",
+    "requires_human_approval": true,
+    "abstained": false,
+    "abstention_reason": null
+  },
+  "baseline": {
+    "strategy": "single_pass_static_evidence",
+    "tool_calls": 0,
+    "reasoning_steps": 1,
+    "adaptive_tool_use": false,
+    "evidence_verifier": false,
+    "conclusion_safety_gate": false,
+    "supplied_evidence": {
+      "case_context": {
+        "case_id": "PAY-004",
+        "invoice_ids": [
+          "INV-1004"
+        ],
+        "payment_ids": [
+          "PI-1004"
+        ]
+      },
+      "invoices": [
+        {
+          "invoice_id": "INV-1004",
+          "case_id": "PAY-004",
+          "customer_id": "CUS-004",
+          "amount": "800.00",
+          "currency": "USD",
+          "status": "paid",
+          "created_at": "2026-08-17T12:00:00Z",
+          "updated_at": "2026-08-17T12:08:00Z"
+        }
+      ],
+      "gateway_events": [
+        {
+          "event_id": "GE-4001",
+          "case_id": "PAY-004",
+          "payment_id": "PI-1004",
+          "invoice_reference": "INV-1004",
+          "event_type": "payment_captured",
+          "amount": "800.00",
+          "currency": "USD",
+          "occurred_at": "2026-08-17T12:04:00Z"
+        }
+      ],
+      "webhook_events": [],
+      "settlements": [],
+      "refunds": [
+        {
+          "refund_id": "REF-4001",
+          "case_id": "PAY-004",
+          "payment_id": "PI-1004",
+          "invoice_id": "INV-1004",
+          "amount": "250.00",
+          "currency": "USD",
+          "status": "succeeded",
+          "created_at": "2026-08-20T15:00:00Z"
+        }
+      ],
+      "audit_events": [
+        {
+          "audit_id": "AUD-4001",
+          "case_id": "PAY-004",
+          "entity_type": "payment",
+          "entity_id": "PI-1004",
+          "event_type": "internal_refund_recorded",
+          "result": "processed",
+          "reason": "internal_refund_amount_200.00",
+          "occurred_at": "2026-08-20T15:00:02Z"
+        },
+        {
+          "audit_id": "AUD-4002",
+          "case_id": "PAY-004",
+          "entity_type": "invoice",
+          "entity_id": "INV-1004",
+          "event_type": "invoice_state_check",
+          "result": "processed",
+          "reason": "invoice_remains_paid",
+          "occurred_at": "2026-08-20T15:00:04Z"
+        }
+      ],
+      "payment_timelines": [
+        {
+          "source": "gateway",
+          "event_type": "payment_captured",
+          "timestamp": "2026-08-17T12:04:00+00:00",
+          "record_id": "GE-4001"
+        },
+        {
+          "source": "refund",
+          "event_type": "refund",
+          "timestamp": "2026-08-20T15:00:00+00:00",
+          "record_id": "REF-4001",
+          "status": "succeeded"
+        }
+      ]
+    }
+  }
+}
