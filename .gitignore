@@ -18,3 +18,5 @@ htmlcov/
 .idea/
 .vscode/
 .DS_Store
+
+outputs/runs/

@@ -35,7 +35,7 @@ def main() -> None:
             f"{args.provider.upper()} {case_id} ===\n",
             flush=True,
         )
-        
+
         output_path = (
             Path("outputs/trajectories")
             / f"baseline-{args.provider}"
@@ -56,6 +56,8 @@ def main() -> None:
                 "scripts/run_baseline_case.py",
                 "--provider",
                 args.provider,
+                "--output-dir",
+                "outputs/trajectories",
                 case_id,
             ],
             check=False,

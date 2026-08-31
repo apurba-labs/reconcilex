@@ -70,6 +70,17 @@ def main() -> None:
         help="LLM provider to use. Defaults to gemini.",
     )
 
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("outputs/runs"),
+        help=(
+            "Directory for live run artifacts. "
+            "Defaults to outputs/runs so committed "
+            "benchmark trajectories remain unchanged."
+        ),
+    )
+
     args = parser.parse_args()
 
     case_input = load_case_input(
@@ -98,7 +109,7 @@ def main() -> None:
     )
 
     output_dir = (
-        Path("outputs/trajectories")
+        args.output_dir
         / args.provider
     )
     output_dir.mkdir(

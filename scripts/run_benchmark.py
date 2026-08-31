@@ -29,6 +29,16 @@ def parse_args() -> argparse.Namespace:
         help="Provider trajectory directory to evaluate.",
     )
 
+    parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help=(
+            "Allow evaluation of an incomplete benchmark. "
+            "Partial results are exploratory and should not "
+            "be used for measured-improvement claims."
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -88,7 +98,7 @@ def main() -> None:
             f"action={evaluation.safe_action_compliant} "
             f"evidence={evaluation.evidence_coverage:.2f}"
         )
-        
+
     EXPECTED_CASE_IDS = {
         f"PAY-{number:03d}"
         for number in range(1, 13)
@@ -104,10 +114,22 @@ def main() -> None:
     )
 
     if missing_case_ids:
-        print(
-            "\nWARNING: partial benchmark. "
+        message = (
+            "Partial benchmark detected. "
             f"Missing {len(missing_case_ids)} cases: "
             + ", ".join(sorted(missing_case_ids))
+        )
+
+        if not args.allow_partial:
+            raise SystemExit(
+                message
+                + "\nRefusing to publish an incomplete benchmark. "
+                "Use --allow-partial only for exploratory runs."
+            )
+
+        print(
+            "\nWARNING: "
+            + message
             + "\n"
         )
 

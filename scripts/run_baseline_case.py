@@ -51,6 +51,17 @@ def main() -> None:
         default="openai",
     )
 
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("outputs/runs"),
+        help=(
+            "Directory for live baseline artifacts. "
+            "Defaults to outputs/runs so committed "
+            "benchmark trajectories remain unchanged."
+        ),
+    )
+
     args = parser.parse_args()
 
     case_input = load_case_input(
@@ -88,7 +99,7 @@ def main() -> None:
     )
 
     output_dir = (
-        Path("outputs/trajectories")
+        args.output_dir
         / f"baseline-{args.provider}"
     )
 
